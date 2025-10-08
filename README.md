@@ -1,4 +1,4 @@
-# 🐉 Pokédex - Projeto em Python
+# ⚡ Pokédex - Projeto em Python
 
 Uma **Pokédex interativa** desenvolvida em **Python** utilizando a **PokeAPI** e **Streamlit**.  
 Permite buscar informações de qualquer Pokémon, exibindo nome, tipo, habilidades, peso, altura e atributos.
@@ -38,3 +38,12 @@ Permite buscar informações de qualquer Pokémon, exibindo nome, tipo, habilida
    ```bash
    git clone https://github.com/BrianAshihara/pokedex.git
    cd pokedex
+
+2. Importe o arquivo "requirements.txt":
+   ```bash
+   pip install -r requirements.txt
+
+3. Execute a aplicação com o streamlit:
+   ```bash
+   streamlit run pokedex.py
+
