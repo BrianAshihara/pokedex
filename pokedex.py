@@ -1,7 +1,7 @@
 # pokedex.py
 # ⚡ Pokédex em Python + Streamlit + PokeAPI
 # Autor: Brian Ashihara
-# Versão: 2.6 (fix: aleatório x pesquisa sem erro; formatação BR de peso/altura)
+# Versão: 3.0
 
 import requests
 import streamlit as st
@@ -93,6 +93,26 @@ if pokemon:
     resposta = requests.get(url)
     if resposta.status_code == 200:
         dados = resposta.json()
+                # Navegação entre Pokémons (Anterior / Próximo)
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 2, 1])
+        with col_nav1:
+            if dados["id"] > 1:  # não existe Pokémon 0
+                if st.button("⬅️ Anterior"):
+                    st.session_state.submitted_name = str(dados["id"] - 1)
+                    st.session_state.pokemon_aleatorio = None
+                    st.session_state.mostrar_shiny = False
+                    st.session_state.forma_atual = None
+                    st.session_state.last_action = "search"
+                    st.rerun()
+        with col_nav3:
+            if st.button("Próximo ➡️"):
+                st.session_state.submitted_name = str(dados["id"] + 1)
+                st.session_state.pokemon_aleatorio = None
+                st.session_state.mostrar_shiny = False
+                st.session_state.forma_atual = None
+                st.session_state.last_action = "search"
+                st.rerun()
+
 
         # Formas alternativas
         formas = get_varieties(dados["name"])
