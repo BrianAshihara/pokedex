@@ -8,6 +8,7 @@ Permite buscar informações de qualquer Pokémon, exibindo nome, tipo, habilida
 ## 🚀 Demonstração
 
 ![Pokedex Screenshot](assets/pokedex_ex.png)
+![Pokedex Screenshot](assets/atributos.png)
 
 > Busque qualquer Pokémon e veja suas informações completas instantaneamente!
 
