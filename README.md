@@ -28,7 +28,7 @@ Permite buscar informações de qualquer Pokémon, exibindo nome, tipo, habilida
 - 🔎 Buscar Pokémon pelo nome  
 - 📸 Exibir imagem oficial (sprite)  
 - 🧩 Mostrar tipos, habilidades, peso e altura  
-- 📊 Exibir atributos (HP, ataque, defesa, etc.) com barras de progresso 
+- 📊 Exibir atributos (HP, ataque, defesa, etc.) com barras de progresso (gráfico em andamento)
 - 🐉 Possibilita mostrar as formas alternativas do mesmo Pokémon (se houver)
 - 🔊 Toca o "cry" do Pokémon (barulho que o Pokémon faz nos jogos oficiais) *Volume alto! 
 - ❌ Tratamento de erros (Pokémon inexistente)
