@@ -86,6 +86,6 @@ Siga os passos abaixo para rodar a Pokédex em sua máquina.
 
 <footer>
   <p align="center">
-    Feito com ❤️ por <b>Brian Ashihara</b>
+    Feito com por <b>Brian Ashihara</b>
   </p>
 </footer>
