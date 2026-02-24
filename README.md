@@ -1,6 +1,6 @@
 # ⚡ Pokédex ⚡
 
-Uma **Pokédex interativa e moderna** construída com **Python** e **Streamlit**, que utiliza a **PokeAPI** para fornecer dados em tempo real sobre o universo Pokémon. Explore, descubra e aprenda sobre seus Pokémons favoritos com uma interface elegante e responsiva.
+Uma **Pokédex interativa e moderna** construída com **Python** e **Streamlit**, que utiliza a **PokeAPI** para fornecer dados em tempo real sobre o universo Pokémon. Explore, descubra e aprenda sobre seus Pokémons favoritos com uma interface elegante em tema escuro.
 
 ---
 
@@ -10,82 +10,86 @@ Uma **Pokédex interativa e moderna** construída com **Python** e **Streamlit**
   <img src="assets/pokedex.png" alt="Demonstração da Pokédex" width="70%">
 </p>
 <p align="center">
+  <img src="assets/mid.png" alt="Seção central da Pokédex" width="70%">
+</p>
+<p align="center">
   <img src="assets/atributos.png" alt="Gráfico de Atributos" width="70%">
 </p>
 
-> Busque qualquer Pokémon, descubra um aleatoriamente e veja suas informações completas instantaneamente!
+> Busque qualquer Pokémon, descubra um aleatório e veja suas informações completas na hora.
 
 ---
 
 ## ✨ Principais Funcionalidades
 
--   **🔎 Pesquisa Inteligente**: Busque um Pokémon pelo nome ou ID.
--   **🎲 Modo Aleatório**: Descubra um Pokémon aleatório com um único clique.
--   **↔️ Navegação Sequencial**: Navegue facilmente para o Pokémon anterior ou seguinte.
--   **🖼️ Galeria de Sprites**: Visualize os sprites normais e shiny de cada Pokémon.
--   **🔊 Áudio Original**: Ouça o "cry" oficial de cada Pokémon (cuidado com o volume!).
--   **🧬 Formas Alternativas**: Explore as diferentes formas e variações de um Pokémon (ex: Mega Evoluções, formas regionais).
--   **📊 Atributos Detalhados**: Veja os status de combate (HP, Ataque, Defesa, etc.) em um gráfico de barras claro e informativo.
--   **🛡️ Tipos e Fraquezas**: Identifique os tipos do Pokémon com badges estilizadas e veja suas fraquezas (dano 2x e 4x).
--   **🎨 Interface Moderna**: Desfrute de um tema escuro e um layout limpo e organizado.
+- **🔎 Pesquisa**: Busque por nome ou ID (pressione Enter para confirmar).
+- **🎲 Pokémon Aleatório**: Um clique para abrir um Pokémon aleatório.
+- **↔️ Navegação**: Botões Anterior / Próximo com pré-carregamento para troca rápida.
+- **🖼️ Sprites**: Sprite normal e shiny, com alternância por botão.
+- **🔊 Cry**: Áudio oficial do Pokémon (cuidado com o volume!).
+- **🧬 Formas alternativas**: Todas as variedades da espécie (Mega, Gigantamax, regionais, etc.) em um seletor.
+- **🔗 Cadeia de evolução**: Card com a linha de evolução, métodos (ex.: Nv 16) e botões "Ver" para ir a cada estágio.
+- **🛡️ Tipos e dano**: Badges de tipos, fraquezas (2x/4x), resistências (0,5x) e imunidades (0x).
+- **💪 Habilidades**: Card com pills para habilidades normais e ocultas.
+- **📊 Atributos**: Gráfico de barras com HP, Ataque, Defesa, Sp. Atk, Sp. Def e Velocidade.
+- **🎨 Interface**: Tema escuro, cards estilizados e layout amplo para evoluções de 3+ estágios.
 
 ---
 
-## ⚙️ Tecnologias Utilizadas
+## ⚙️ Tecnologias
 
--   **🐍 Python 3**: Linguagem principal do projeto.
--   **streamlit**: Framework para a criação da interface web interativa.
--   **requests**: Biblioteca para realizar as requisições à PokeAPI.
--   **PokeAPI**: Fonte de todos os dados dos Pokémons.
+- **Python 3**
+- **Streamlit** – interface web
+- **requests** – chamadas à PokeAPI
+- **PokeAPI** – dados dos Pokémon (espécie, evolução, tipos, etc.)
+
+O app usa cache (1 h) e requisições em paralelo onde faz sentido para melhorar a velocidade.
 
 ---
 
 ## 📂 Estrutura do Projeto
 
-O código foi modularizado para facilitar a manutenção e escalabilidade:
-
 ```
 pokedex/
 ├── src/
 │   ├── __init__.py
-│   ├── pokeapi.py      # Módulo para interagir com a PokeAPI
-│   └── ui.py           # Módulo para componentes de UI (estilos, badges)
+│   ├── pokeapi.py    # Chamadas à PokeAPI, cache, paralelismo
+│   └── ui.py        # Estilos, badges, HTML (evolução, habilidades, stats)
+├── .streamlit/
+│   └── config.toml  # Configuração (ex.: headless para deploy)
 ├── assets/
-│   ├── pokedex.png     # Imagens para o README
+│   ├── pokedex.png
 │   └── atributos.png
-├── pokedex.py          # Arquivo principal da aplicação Streamlit
-├── requirements.txt    # Dependências do projeto
-└── README.md           # Este arquivo
+├── pokedex.py       # App principal Streamlit
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## 🏁 Como Executar Localmente
+## 🏁 Como rodar
 
-Siga os passos abaixo para rodar a Pokédex em sua máquina.
+1. **Clone e entre na pasta:**
+   ```bash
+   git clone https://github.com/BrianAshihara/pokedex.git
+   cd pokedex
+   ```
 
-1.  **Clone o repositório:**
-    ```bash
-    git clone https://github.com/BrianAshihara/pokedex.git
-    cd pokedex
-    ```
+2. **Instale as dependências:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-2.  **Instale as dependências:**
-    Certifique-se de ter o Python 3 instalado e execute o comando abaixo para instalar as bibliotecas necessárias.
-    ```bash
-    pip install -r requirements.txt
-    ```
+3. **Inicie o app:**
+   ```bash
+   streamlit run pokedex.py
+   ```
+   O navegador abrirá em `http://localhost:8501`.
 
-3.  **Execute a aplicação:**
-    ```bash
-    streamlit run pokedex.py
-    ```
-    A aplicação será aberta automaticamente no seu navegador padrão.
+Para deploy no **Streamlit Community Cloud**, use o arquivo principal `pokedex.py` na raiz do repositório.
 
 ---
 
-<footer>
-  <p align="center">
-    Feito por <b>Brian Ashihara</b>
-  </p>
-</footer>
+<p align="center">
+  Feito por <b>Brian Ashihara</b>
+</p>

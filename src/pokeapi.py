@@ -2,57 +2,56 @@
 
 import requests
 import streamlit as st
+from concurrent.futures import ThreadPoolExecutor
 
 _SESSION = requests.Session()
+_REQUEST_TIMEOUT = 10  # seconds — evita travar em API lenta
 
-# Função para pegar formas alternativas
+# Função para pegar formas alternativas (todas as variedades da espécie, não só mega/gmax/regionais)
 @st.cache_data(ttl=3600) # Cachear por 1 hora
-def get_varieties(pokemon_name):
-    species_url = f"https://pokeapi.co/api/v2/pokemon-species/{pokemon_name}"
-    res = _SESSION.get(species_url)
+def get_varieties(species_name):
+    species_url = f"https://pokeapi.co/api/v2/pokemon-species/{species_name}"
+    res = _SESSION.get(species_url, timeout=_REQUEST_TIMEOUT)
     if res.status_code != 200:
         return []
     data = res.json()
     formas = []
     for var in data.get("varieties", []):
+        if var.get("is_default", True):
+            continue  # forma padrão é exibida como "Normal" na UI
         name = var["pokemon"]["name"]
-        if any(x in name for x in ["mega", "gmax", "alola", "galar", "paldea"]) and name != pokemon_name:
-            formas.append({"name": name, "url": var["pokemon"]["url"]})
+        formas.append({"name": name, "url": var["pokemon"]["url"]})
     return formas
 
 # Função para buscar dados de tipo (cacheado por URL)
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_type_data(type_url):
-    res = _SESSION.get(type_url)
+    res = _SESSION.get(type_url, timeout=_REQUEST_TIMEOUT)
     if res.status_code != 200:
         return None
     return res.json()
 
-# Função para calcular fraquezas, resistências e imunidades
+# Função para calcular fraquezas, resistências e imunidades (tipos buscados em paralelo)
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def get_type_weaknesses(pokemon_types):
-    type_damage_multipliers = {}
+    type_urls = [t["type"]["url"] for t in pokemon_types]
+    with ThreadPoolExecutor(max_workers=min(5, len(type_urls))) as executor:
+        type_datas = list(executor.map(fetch_type_data, type_urls))
 
-    for type_info in pokemon_types:
-        type_name = type_info["type"]["name"]
-        type_url = type_info["type"]["url"]
-        
-        type_data = fetch_type_data(type_url)
+    type_damage_multipliers = {}
+    for type_data in type_datas:
         if not type_data:
             continue
-        
         for damage_relation in type_data["damage_relations"]["double_damage_from"]:
             attacking_type = damage_relation["name"]
             type_damage_multipliers[attacking_type] = type_damage_multipliers.get(attacking_type, 1) * 2
-            
         for damage_relation in type_data["damage_relations"]["half_damage_from"]:
             attacking_type = damage_relation["name"]
             type_damage_multipliers[attacking_type] = type_damage_multipliers.get(attacking_type, 1) * 0.5
-
         for damage_relation in type_data["damage_relations"]["no_damage_from"]:
             attacking_type = damage_relation["name"]
-            type_damage_multipliers[attacking_type] = 0 # Imune
-    
+            type_damage_multipliers[attacking_type] = 0  # Imune
+
     weaknesses_2x = []
     weaknesses_4x = []
     resistances_0_5x = []
@@ -74,7 +73,7 @@ def get_type_weaknesses(pokemon_types):
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_pokemon_data(pokemon_name):
     url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_name}"
-    resposta = _SESSION.get(url)
+    resposta = _SESSION.get(url, timeout=_REQUEST_TIMEOUT)
     if resposta.status_code == 200:
         return resposta.json()
     return None
@@ -82,7 +81,7 @@ def fetch_pokemon_data(pokemon_name):
 # Função para buscar dados do Pokémon por URL
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_pokemon_by_url(url):
-    resposta = _SESSION.get(url)
+    resposta = _SESSION.get(url, timeout=_REQUEST_TIMEOUT)
     if resposta.status_code == 200:
         return resposta.json()
     return None
@@ -91,7 +90,7 @@ def fetch_pokemon_by_url(url):
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_species_data(pokemon_name):
     url = f"https://pokeapi.co/api/v2/pokemon-species/{pokemon_name}"
-    resposta = _SESSION.get(url)
+    resposta = _SESSION.get(url, timeout=_REQUEST_TIMEOUT)
     if resposta.status_code == 200:
         return resposta.json()
     return None
@@ -99,7 +98,7 @@ def fetch_species_data(pokemon_name):
 # Função para buscar cadeia de evolução por URL
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_evolution_chain(chain_url):
-    resposta = _SESSION.get(chain_url)
+    resposta = _SESSION.get(chain_url, timeout=_REQUEST_TIMEOUT)
     if resposta.status_code == 200:
         return resposta.json()
     return None
@@ -202,7 +201,21 @@ def summarize_evolution_methods(evolution_details_list):
             seen.add(s)
     return " / ".join(unique)
 
-# Função para obter cadeia de evolução com métodos e sprites
+def _sprite_from_pokemon_data(data):
+    """Extrai URL do sprite a partir dos dados do Pokémon (para uso em paralelo)."""
+    if not data:
+        return None
+    sprites = data.get("sprites", {})
+    sprite = sprites.get("front_default")
+    if not sprite:
+        sprite = (
+            (sprites.get("other") or {}).get("official-artwork", {}).get("front_default")
+        )
+    return sprite
+
+
+# Função para obter cadeia de evolução com métodos e sprites (cacheada + sprites em paralelo)
+@st.cache_data(ttl=3600)
 def get_evolution_chain_with_methods(pokemon_name):
     species_data = fetch_species_data(pokemon_name)
     if not species_data:
@@ -234,22 +247,20 @@ def get_evolution_chain_with_methods(pokemon_name):
 
     paths = build_paths(chain_data["chain"])
 
-    sprites_map = {}
+    names_to_fetch = []
+    seen = set()
     for path in paths:
         for name, _ in path:
-            if name in sprites_map:
-                continue
-            data = fetch_pokemon_data(name)
-            sprite = None
-            if data:
-                sprites = data.get("sprites", {})
-                sprite = sprites.get("front_default")
-                if not sprite:
-                    sprite = (
-                        (sprites.get("other") or {})
-                        .get("official-artwork", {})
-                        .get("front_default")
-                    )
-            sprites_map[name] = sprite
+            if name not in seen:
+                seen.add(name)
+                names_to_fetch.append(name)
+
+    with ThreadPoolExecutor(max_workers=min(8, len(names_to_fetch))) as executor:
+        pokemon_datas = list(executor.map(fetch_pokemon_data, names_to_fetch))
+
+    sprites_map = {
+        name: _sprite_from_pokemon_data(data)
+        for name, data in zip(names_to_fetch, pokemon_datas)
+    }
 
     return paths, sprites_map

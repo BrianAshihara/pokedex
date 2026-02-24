@@ -1,5 +1,7 @@
 # src/ui.py
 
+import html
+
 DARK_STYLE = """
 <style>
     .stApp { background-color: #121212; color: #f1f1f1; }
@@ -125,6 +127,96 @@ DARK_STYLE = """
     .stat-bar-good { background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%); }
     .stat-bar-excellent { background: linear-gradient(90deg, #00bcd4 0%, #26c6da 100%); }
     .stat-bar-legendary { background: linear-gradient(90deg, #9c27b0 0%, #ba68c8 100%); }
+
+    /* Evolution chain */
+    .evo-chain-box {
+        background: linear-gradient(145deg, #1a1a1e 0%, #16161a 100%);
+        border: 1px solid #3b4cca;
+        border-radius: 12px;
+        padding: 16px;
+        margin: 8px 0;
+        box-shadow: 0 2px 8px rgba(59, 76, 202, 0.15);
+        box-sizing: border-box;
+        width: 100%;
+    }
+    .evo-chain-inner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+    }
+    .evo-node {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 4px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        min-width: 72px;
+    }
+    .evo-node img { border-radius: 8px; }
+    .evo-node span { font-size: 12px; color: #ccc; margin-top: 4px; font-weight: 500; }
+    .evo-arrow {
+        color: #ffcb05;
+        font-size: 14px;
+        margin: 0 2px;
+    }
+    .evo-method-pill {
+        display: inline-block;
+        background: rgba(255, 203, 5, 0.18);
+        color: #ffcb05;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        margin: 0 2px;
+        border: 1px solid rgba(255, 203, 5, 0.35);
+    }
+    [data-testid="stExpander"] div[style*="overflow"] {
+        background: #121212 !important;
+        border-radius: 0 0 12px 12px;
+    }
+
+    /* Abilities section */
+    .abilities-box {
+        background: linear-gradient(145deg, #1a1a1e 0%, #16161a 100%);
+        border: 1px solid #3b4cca;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 10px 0;
+        box-shadow: 0 2px 8px rgba(59, 76, 202, 0.12);
+        box-sizing: border-box;
+        width: 100%;
+    }
+    .abilities-box .ability-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #ffcb05;
+        margin-bottom: 8px;
+    }
+    .abilities-box .ability-label.hidden {
+        color: #b8a078;
+        margin-top: 12px;
+    }
+    .ability-pill {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.08);
+        color: #e8e8e8;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        margin: 4px 6px 4px 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .ability-pill.hidden {
+        background: rgba(184, 160, 120, 0.2);
+        color: #d4c4a0;
+        border-color: rgba(184, 160, 120, 0.4);
+    }
 </style>
 """
 
@@ -140,6 +232,40 @@ def get_type_badges(types_list):
 def generate_single_weakness_badge(type_name, multiplier_string):
     """Gera um único badge HTML para uma fraqueza com um multiplicador."""
     return f'<span class="type-badge type-{type_name}">{type_name.capitalize()} ({multiplier_string})</span> '
+
+
+def create_abilities_html(habilidades_normais, habilidades_ocultas):
+    """Monta o HTML da seção de habilidades (card + pills)."""
+    parts = ['<div class="abilities-box">']
+    if habilidades_normais:
+        parts.append('<div class="ability-label">Habilidades</div>')
+        for nome in habilidades_normais:
+            parts.append(f'<span class="ability-pill">{html.escape(nome)}</span>')
+    if habilidades_ocultas:
+        parts.append('<div class="ability-label hidden">Habilidades ocultas</div>')
+        for nome in habilidades_ocultas:
+            parts.append(f'<span class="ability-pill hidden">{html.escape(nome)}</span>')
+    parts.append('</div>')
+    return "".join(parts)
+
+
+def create_evolution_chain_html(path, sprites_map):
+    """Monta o HTML da cadeia de evolução (nós + setas + pills de método)."""
+    parts = ['<div class="evo-chain-box"><div class="evo-chain-inner">']
+    for i, (name, method) in enumerate(path):
+        sprite_url = sprites_map.get(name)
+        label = html.escape(name.replace("-", " ").title())
+        parts.append('<div class="evo-node">')
+        if sprite_url:
+            parts.append(f'<img src="{html.escape(sprite_url)}" alt="{label}" width="64" height="64">')
+        parts.append(f'<span>{label}</span></div>')
+        if i < len(path) - 1:
+            next_method = html.escape(path[i + 1][1] or "—")
+            parts.append('<span class="evo-arrow">→</span>')
+            parts.append(f'<span class="evo-method-pill">{next_method}</span>')
+            parts.append('<span class="evo-arrow">→</span>')
+    parts.append("</div></div>")
+    return "".join(parts)
 
 # Função para criar gráfico de barras horizontal de stats
 def create_stats_bars(stats_data):

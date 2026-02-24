@@ -4,6 +4,7 @@
 # Versão: 3.8.2 -
 
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 from src import pokeapi, ui
 
@@ -85,8 +86,9 @@ if pokemon:
                 st.session_state.last_action = "search"
                 st.rerun()
 
-        # Formas alternativas
-        formas = pokeapi.get_varieties(dados["name"])
+        # Formas alternativas (usa espécie para listar todas as variedades)
+        species_name = dados.get("species", {}).get("name") or dados["name"]
+        formas = pokeapi.get_varieties(species_name)
         if formas:
             opcoes = [f["name"].replace("-", " ").title() for f in formas]
             escolha = st.selectbox("Formas alternativas disponíveis:", ["Normal"] + opcoes)
@@ -102,8 +104,14 @@ if pokemon:
         else:
             st.session_state.forma_atual = None
 
-        # Layout
-        col1, col2 = st.columns([1,2])
+        # Pré-carregar anterior/próximo na cache para navegação instantânea
+        pid = dados["id"]
+        if pid > 1:
+            pokeapi.fetch_pokemon_data(str(pid - 1))
+        pokeapi.fetch_pokemon_data(str(pid + 1))
+
+        # Layout (col2 bem largo para cadeia de evolução com 3+ estágios)
+        col1, col2 = st.columns([1, 3])
         with col1:
             if st.session_state.mostrar_shiny:
                 sprite = dados["sprites"].get("front_shiny")
@@ -175,7 +183,25 @@ if pokemon:
                     all_immunities_html += ui.generate_single_weakness_badge(type_name, '0x')
             if all_immunities_html:
                 st.markdown(f"**Imunidades:** {all_immunities_html}", unsafe_allow_html=True)
-            
+
+            # Cadeia de evolução (estilo card + pills)
+            evo_species = dados.get("species", {}).get("name") or dados["name"]
+            evo_paths, evo_sprites = pokeapi.get_evolution_chain_with_methods(evo_species)
+            if evo_paths and len(evo_paths[0]) > 1:
+                path = evo_paths[0]
+                with st.expander("Cadeia de evolução", expanded=True):
+                    st.markdown(ui.create_evolution_chain_html(path, evo_sprites), unsafe_allow_html=True)
+                    evo_cols = st.columns(len(path))
+                    for ic, (name, _) in enumerate(path):
+                        with evo_cols[ic]:
+                            if st.button("Ver", key=f"evo_{name}", help=f"Ver {name.replace('-', ' ').title()}"):
+                                st.session_state.submitted_name = name
+                                st.session_state.pokemon_aleatorio = None
+                                st.session_state.mostrar_shiny = False
+                                st.session_state.forma_atual = None
+                                st.session_state.last_action = "search"
+                                st.rerun()
+
             habilidades_normais = []
             habilidades_ocultas = []
             for a in dados.get("abilities", []):
@@ -185,10 +211,11 @@ if pokemon:
                 else:
                     habilidades_normais.append(nome)
 
-            if habilidades_normais:
-                st.write(f"**Habilidades:** {', '.join(habilidades_normais)}")
-            if habilidades_ocultas:
-                st.write(f"**Habilidades Ocultas:** {', '.join(habilidades_ocultas)}")
+            if habilidades_normais or habilidades_ocultas:
+                st.markdown(
+                    ui.create_abilities_html(habilidades_normais, habilidades_ocultas),
+                    unsafe_allow_html=True,
+                )
 
 
         
@@ -212,8 +239,6 @@ if pokemon:
         st.write("### Atributos:")
         if pokemon_stats:
             stats_html = ui.create_stats_bars(pokemon_stats)
-            # Use components.html for better rendering
-            import streamlit.components.v1 as components
             components.html(stats_html, height=400, scrolling=False)
         else:
             st.write("Dados de atributos não disponíveis.")

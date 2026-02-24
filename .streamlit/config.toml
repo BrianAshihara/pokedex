@@ -1,0 +1,5 @@
+# Streamlit config (used locally and on Community Cloud)
+# https://docs.streamlit.io/develop/api-reference/configuration/config.toml
+
+[server]
+headless = true
