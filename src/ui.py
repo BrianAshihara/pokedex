@@ -11,19 +11,19 @@ DARK_STYLE = """
     h1,h2,h3,h4 { color: #ffcb05; }
     footer { text-align: center; font-size: 0.9em; margin-top: 50px; color: #888; }
     
-    /* Pokemon Type Badges - DS Game Style with Pixel Font */
+    /* Pokemon Type Badges - DS Game Style */
     .type-badge {
         display: inline-block;
         padding: 4px 12px;
         margin: 2px 3px;
-        border-radius: 3px;
+        border-radius: 2px;
         font-weight: 900;
         font-size: 14px;
         text-transform: uppercase;
-        color: white;
+        color: #f0f0f0;
         font-family: 'Courier New', 'Courier', 'Lucida Console', monospace;
-        letter-spacing: 1.5px;
-        border: 2px solid rgba(0,0,0,0.2);
+        letter-spacing: 1.4px;
+        border: 2px solid #1a1a1a;
         text-rendering: geometricPrecision;
         -webkit-font-smoothing: none;
         -moz-osx-font-smoothing: unset;
@@ -31,25 +31,27 @@ DARK_STYLE = """
         image-rendering: pixelated;
         image-rendering: -moz-crisp-edges;
         image-rendering: crisp-edges;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 1px 0 rgba(0,0,0,0.6);
+        text-shadow: 0 1px 0 rgba(0,0,0,0.7);
     }
-    .type-normal { background-color: #A8A878; }
-    .type-fire { background-color: #F08030; }
-    .type-water { background-color: #6890F0; }
-    .type-electric { background-color: #F8D030; color: #212121; }
-    .type-grass { background-color: #78C850; }
-    .type-ice { background-color: #98D8D8; color: #212121; }
-    .type-fighting { background-color: #C03028; }
-    .type-poison { background-color: #A040A0; }
-    .type-ground { background-color: #E0C068; color: #212121; }
-    .type-flying { background-color: #A890F0; }
-    .type-psychic { background-color: #F85888; }
-    .type-bug { background-color: #A8B820; }
-    .type-rock { background-color: #B8A038; }
-    .type-ghost { background-color: #705898; }
-    .type-dragon { background-color: #7038F8; }
-    .type-dark { background-color: #705848; }
-    .type-steel { background-color: #B8B8D0; color: #212121; }
-    .type-fairy { background-color: #EE99AC; color: #212121; }
+    .type-normal { background: linear-gradient(#d4d4b6, #a8a878); }
+    .type-fire { background: linear-gradient(#ffa264, #f08030); }
+    .type-water { background: linear-gradient(#87a9f2, #5b80e0); }
+    .type-electric { background: linear-gradient(#f6dd6a, #eac126); }
+    .type-grass { background: linear-gradient(#8bcf6a, #63b041); }
+    .type-ice { background: linear-gradient(#a7d8d8, #7bb7b5); }
+    .type-fighting { background: linear-gradient(#e35a52, #c03028); }
+    .type-poison { background: linear-gradient(#c876c8, #a040a0); }
+    .type-ground { background: linear-gradient(#e4c782, #cfae52); }
+    .type-flying { background: linear-gradient(#cbb9ff, #a890f0); }
+    .type-psychic { background: linear-gradient(#ff86ad, #f85888); }
+    .type-bug { background: linear-gradient(#c9dd55, #a8b820); }
+    .type-rock { background: linear-gradient(#d8c175, #b8a038); }
+    .type-ghost { background: linear-gradient(#957dc0, #705898); }
+    .type-dragon { background: linear-gradient(#9b74ff, #7038f8); }
+    .type-dark { background: linear-gradient(#8f715f, #705848); }
+    .type-steel { background: linear-gradient(#b2b5c8, #878aa6); }
+    .type-fairy { background: linear-gradient(#f0aac3, #e387a2); }
     
     /* Stats Bar Chart Styles */
     .stats-container {
@@ -186,11 +188,11 @@ def create_stats_bars(stats_data):
         </div>
         '''
     
-    # Adicionar linha do total (sem barra)
+    # Adicionar linha do total (sem barra), no mesmo estilo das linhas de stats
     html += f'''
-    <div style="display: flex; align-items: center; margin: 10px 0; padding: 12px 0 6px 0; border-top: 1px solid #2a2a2a; min-height: 30px;">
-        <div style="min-width: 90px; width: 90px; text-align: right; padding-right: 15px; font-size: 14px; color: #999; font-weight: 700;">Total</div>
-        <div style="min-width: 50px; width: 50px; text-align: right; padding-right: 15px; font-size: 16px; font-weight: 700; color: #f1f1f1;">{total}</div>
+    <div style="display: flex; align-items: center; margin: 10px 0; padding: 6px 0; border-bottom: 1px solid #2a2a2a; min-height: 30px;">
+        <div style="min-width: 90px; width: 90px; text-align: right; padding-right: 15px; font-size: 14px; color: #ffcb05; font-weight: 700;">Total</div>
+        <div style="min-width: 50px; width: 50px; text-align: right; padding-right: 15px; font-size: 16px; font-weight: 700; color: #ffcb05;">{total}</div>
     </div>
     '''
     

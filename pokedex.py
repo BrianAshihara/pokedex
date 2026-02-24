@@ -1,11 +1,10 @@
 # pokedex.py
 # ⚡ Pokédex em Python + Streamlit + PokeAPI
 # Autor: Brian Ashihara
-# Versão: 3.6 - Refatorado em módulos + Melhoria em atributos + Fraquezas de cada Pokemon
+# Versão: 3.8.2 -
 
 import streamlit as st
 import random
-import requests
 from src import pokeapi, ui
 
 # Configuração inicial
@@ -95,9 +94,9 @@ if pokemon:
                 for f in formas:
                     if f["name"].replace("-", " ").title() == escolha:
                         url = f["url"]
-                        resposta = requests.get(url)
-                        if resposta.status_code == 200:
-                            dados = resposta.json()
+                        dados_alt = pokeapi.fetch_pokemon_by_url(url)
+                        if dados_alt:
+                            dados = dados_alt
                             st.session_state.forma_atual = escolha
                         break
         else:
@@ -149,8 +148,8 @@ if pokemon:
             type_badges = ui.get_type_badges(dados.get("types", []))
             st.markdown(f"**Tipos:** {type_badges}", unsafe_allow_html=True)
             
-            # Fraquezas
-            weaknesses_2x, weaknesses_4x = pokeapi.get_type_weaknesses(dados.get("types", []))
+            # Fraquezas, resistências e imunidades
+            weaknesses_2x, weaknesses_4x, resistances_0_5x, immunities_0x = pokeapi.get_type_weaknesses(dados.get("types", []))
             
             all_weaknesses_html = ""
             if weaknesses_4x:
@@ -162,9 +161,36 @@ if pokemon:
 
             if all_weaknesses_html:
                 st.markdown(f"**Fraquezas:** {all_weaknesses_html}", unsafe_allow_html=True)
+
+            all_resistances_html = ""
+            if resistances_0_5x:
+                for type_name in resistances_0_5x:
+                    all_resistances_html += ui.generate_single_weakness_badge(type_name, '0.5x')
+            if all_resistances_html:
+                st.markdown(f"**Resistências:** {all_resistances_html}", unsafe_allow_html=True)
+
+            all_immunities_html = ""
+            if immunities_0x:
+                for type_name in immunities_0x:
+                    all_immunities_html += ui.generate_single_weakness_badge(type_name, '0x')
+            if all_immunities_html:
+                st.markdown(f"**Imunidades:** {all_immunities_html}", unsafe_allow_html=True)
             
-            habilidades = ", ".join([a["ability"]["name"].capitalize() for a in dados.get("abilities", [])])
-            st.write(f"**Habilidades:** {habilidades}")
+            habilidades_normais = []
+            habilidades_ocultas = []
+            for a in dados.get("abilities", []):
+                nome = a["ability"]["name"].capitalize()
+                if a.get("is_hidden"):
+                    habilidades_ocultas.append(nome)
+                else:
+                    habilidades_normais.append(nome)
+
+            if habilidades_normais:
+                st.write(f"**Habilidades:** {', '.join(habilidades_normais)}")
+            if habilidades_ocultas:
+                st.write(f"**Habilidades Ocultas:** {', '.join(habilidades_ocultas)}")
+
+
         
         # Prepare stats for radar chart
         stats_map = {
