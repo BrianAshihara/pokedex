@@ -1,7 +1,7 @@
 # pokedex.py
 # ⚡ Pokédex em Python + Streamlit + PokeAPI
 # Autor: Brian Ashihara
-# Versão: 3.8.2 -
+# Versão: 4.4.3
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -90,11 +90,11 @@ if pokemon:
         species_name = dados.get("species", {}).get("name") or dados["name"]
         formas = pokeapi.get_varieties(species_name)
         if formas:
-            opcoes = [f["name"].replace("-", " ").title() for f in formas]
+            opcoes = [ui.format_pokemon_display_name(f["name"]) for f in formas]
             escolha = st.selectbox("Formas alternativas disponíveis:", ["Normal"] + opcoes)
             if escolha != "Normal":
                 for f in formas:
-                    if f["name"].replace("-", " ").title() == escolha:
+                    if ui.format_pokemon_display_name(f["name"]) == escolha:
                         url = f["url"]
                         dados_alt = pokeapi.fetch_pokemon_by_url(url)
                         if dados_alt:
@@ -116,7 +116,7 @@ if pokemon:
             if st.session_state.mostrar_shiny:
                 sprite = dados["sprites"].get("front_shiny")
                 if sprite:
-                    st.image(sprite, width=200, caption=f"{dados['name'].title()} (Shiny ✨)")
+                    st.image(sprite, width=200, caption=f"{ui.format_pokemon_display_name(dados['name'])} (Shiny)")
                 else:
                     st.write("Sprite shiny indisponível.")
                 if st.button("⬅️ Voltar ao Sprite Normal"):
@@ -125,7 +125,7 @@ if pokemon:
             else:
                 sprite = dados["sprites"].get("front_default")
                 if sprite:
-                    st.image(sprite, width=200, caption=dados['name'].title())
+                    st.image(sprite, width=200, caption=ui.format_pokemon_display_name(dados["name"]))
                 else:
                     st.write("Sprite padrão indisponível.")
                 if st.button("✨ Mostrar Sprite Shiny"):
@@ -142,7 +142,7 @@ if pokemon:
                 st.write("🔇 Cry não disponível para este Pokémon.")
 
         with col2:
-            st.subheader(dados["name"].title())
+            st.subheader(ui.format_pokemon_display_name(dados["name"]))
 
             altura_m = dados.get("height", 0) / 10
             peso_kg = dados.get("weight", 0) / 10
@@ -194,7 +194,7 @@ if pokemon:
                     evo_cols = st.columns(len(path))
                     for ic, (name, _) in enumerate(path):
                         with evo_cols[ic]:
-                            if st.button("Ver", key=f"evo_{name}", help=f"Ver {name.replace('-', ' ').title()}"):
+                            if st.button("Ver", key=f"evo_{name}", help=f"Ver {ui.format_pokemon_display_name(name)}"):
                                 st.session_state.submitted_name = name
                                 st.session_state.pokemon_aleatorio = None
                                 st.session_state.mostrar_shiny = False
@@ -235,11 +235,18 @@ if pokemon:
             if stat_name in stats_map:
                 pokemon_stats[stats_map[stat_name]] = base_stat
 
-        # Display the stats bar chart
+        # Display the stats radar (hexágono)
         st.write("### Atributos:")
         if pokemon_stats:
-            stats_html = ui.create_stats_bars(pokemon_stats)
-            components.html(stats_html, height=400, scrolling=False)
+            stats_html = ui.create_stats_radar(pokemon_stats)
+            stats_bars_html = ui.create_stats_bars(pokemon_stats)
+            combined_stats_html = f"""
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                {stats_html}
+                {stats_bars_html}
+            </div>
+            """
+            components.html(combined_stats_html, height=980, scrolling=False)
         else:
             st.write("Dados de atributos não disponíveis.")
     else:
@@ -252,3 +259,4 @@ st.markdown("""
 ---
 <footer>👨‍💻 Autor: <b>Brian Ashihara</b> | Projeto Pokédex ⚡</footer>
 """, unsafe_allow_html=True)
+

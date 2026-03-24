@@ -5,9 +5,60 @@ import streamlit as st
 from concurrent.futures import ThreadPoolExecutor
 
 _SESSION = requests.Session()
-_REQUEST_TIMEOUT = 10  # seconds — evita travar em API lenta
+_REQUEST_TIMEOUT = 10  # seconds - evita travar em API lenta
+_POKEMON_LIST_URL = "https://pokeapi.co/api/v2/pokemon?limit=20000"
 
-# Função para pegar formas alternativas (todas as variedades da espécie, não só mega/gmax/regionais)
+
+def _sanitize_lookup_name(value):
+    return str(value or "").strip().lower().replace(" ", "-").replace("_", "-")
+
+
+def _normalize_query(value):
+    text = str(value or "").strip().lower()
+    return "".join(ch for ch in text if ch.isalnum())
+
+
+def _fetch_pokemon_data_raw(pokemon_ref):
+    url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_ref}"
+    resposta = _SESSION.get(url, timeout=_REQUEST_TIMEOUT)
+    if resposta.status_code == 200:
+        return resposta.json()
+    return None
+
+
+@st.cache_data(ttl=3600)
+def fetch_all_pokemon_names():
+    resposta = _SESSION.get(_POKEMON_LIST_URL, timeout=_REQUEST_TIMEOUT)
+    if resposta.status_code != 200:
+        return []
+    data = resposta.json()
+    return [p.get("name") for p in data.get("results", []) if p.get("name")]
+
+
+@st.cache_data(ttl=3600)
+def build_pokemon_alias_map():
+    aliases = {}
+    for name in fetch_all_pokemon_names():
+        normalized = _normalize_query(name)
+        if normalized and normalized not in aliases:
+            aliases[normalized] = name
+    return aliases
+
+
+def resolve_pokemon_name(query):
+    candidate = _sanitize_lookup_name(query)
+    if not candidate:
+        return candidate
+
+    normalized = _normalize_query(candidate)
+    if not normalized:
+        return candidate
+
+    alias_map = build_pokemon_alias_map()
+    return alias_map.get(normalized, candidate)
+
+
+# Funcao para pegar formas alternativas (todas as variedades da especie, nao so mega/gmax/regionais)
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def get_varieties(species_name):
     species_url = f"https://pokeapi.co/api/v2/pokemon-species/{species_name}"
@@ -18,12 +69,12 @@ def get_varieties(species_name):
     formas = []
     for var in data.get("varieties", []):
         if var.get("is_default", True):
-            continue  # forma padrão é exibida como "Normal" na UI
+            continue  # forma padrao e exibida como "Normal" na UI
         name = var["pokemon"]["name"]
         formas.append({"name": name, "url": var["pokemon"]["url"]})
     return formas
 
-# Função para buscar dados de tipo (cacheado por URL)
+# Funcao para buscar dados de tipo (cacheado por URL)
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_type_data(type_url):
     res = _SESSION.get(type_url, timeout=_REQUEST_TIMEOUT)
@@ -31,7 +82,7 @@ def fetch_type_data(type_url):
         return None
     return res.json()
 
-# Função para calcular fraquezas, resistências e imunidades (tipos buscados em paralelo)
+# Funcao para calcular fraquezas, resistencias e imunidades (tipos buscados em paralelo)
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def get_type_weaknesses(pokemon_types):
     type_urls = [t["type"]["url"] for t in pokemon_types]
@@ -56,7 +107,7 @@ def get_type_weaknesses(pokemon_types):
     weaknesses_4x = []
     resistances_0_5x = []
     immunities_0x = []
-    
+
     for type_name, multiplier in type_damage_multipliers.items():
         if multiplier == 4:
             weaknesses_4x.append(type_name)
@@ -66,19 +117,31 @@ def get_type_weaknesses(pokemon_types):
             resistances_0_5x.append(type_name)
         elif multiplier == 0:
             immunities_0x.append(type_name)
-            
+
     return weaknesses_2x, weaknesses_4x, resistances_0_5x, immunities_0x
 
-# Função para buscar dados do Pokémon
+# Funcao para buscar dados do Pokemon
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_pokemon_data(pokemon_name):
-    url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_name}"
-    resposta = _SESSION.get(url, timeout=_REQUEST_TIMEOUT)
-    if resposta.status_code == 200:
-        return resposta.json()
-    return None
+    original_ref = str(pokemon_name or "").strip().lower()
+    if not original_ref:
+        return None
 
-# Função para buscar dados do Pokémon por URL
+    direct_ref = original_ref if original_ref.isdigit() else _sanitize_lookup_name(original_ref)
+    direct_data = _fetch_pokemon_data_raw(direct_ref)
+    if direct_data:
+        return direct_data
+
+    if direct_ref.isdigit():
+        return None
+
+    resolved_ref = resolve_pokemon_name(direct_ref)
+    if not resolved_ref or resolved_ref == direct_ref:
+        return None
+
+    return _fetch_pokemon_data_raw(resolved_ref)
+
+# Funcao para buscar dados do Pokemon por URL
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_pokemon_by_url(url):
     resposta = _SESSION.get(url, timeout=_REQUEST_TIMEOUT)
@@ -86,7 +149,7 @@ def fetch_pokemon_by_url(url):
         return resposta.json()
     return None
 
-# Função para buscar dados da espécie do Pokémon
+# Funcao para buscar dados da especie do Pokemon
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_species_data(pokemon_name):
     url = f"https://pokeapi.co/api/v2/pokemon-species/{pokemon_name}"
@@ -95,7 +158,7 @@ def fetch_species_data(pokemon_name):
         return resposta.json()
     return None
 
-# Função para buscar cadeia de evolução por URL
+# Funcao para buscar cadeia de evolucao por URL
 @st.cache_data(ttl=3600) # Cachear por 1 hora
 def fetch_evolution_chain(chain_url):
     resposta = _SESSION.get(chain_url, timeout=_REQUEST_TIMEOUT)
@@ -103,7 +166,7 @@ def fetch_evolution_chain(chain_url):
         return resposta.json()
     return None
 
-# Função para resumir métodos de evolução
+# Funcao para resumir metodos de evolucao
 def summarize_evolution_methods(evolution_details_list):
     summaries = []
 
@@ -158,11 +221,11 @@ def summarize_evolution_methods(evolution_details_list):
                 parts.append("Atk = Def")
             gender = detail.get("gender")
             if gender == 1:
-                parts.append("Fêmea")
+                parts.append("Femea")
             elif gender == 2:
                 parts.append("Macho")
             if detail.get("turn_upside_down"):
-                parts.append("De cabeça para baixo")
+                parts.append("De cabeca para baixo")
 
         elif trigger == "use-item":
             item = (detail.get("item") or {}).get("name")
@@ -201,8 +264,9 @@ def summarize_evolution_methods(evolution_details_list):
             seen.add(s)
     return " / ".join(unique)
 
+
 def _sprite_from_pokemon_data(data):
-    """Extrai URL do sprite a partir dos dados do Pokémon (para uso em paralelo)."""
+    """Extrai URL do sprite a partir dos dados do Pokemon (para uso em paralelo)."""
     if not data:
         return None
     sprites = data.get("sprites", {})
@@ -214,7 +278,7 @@ def _sprite_from_pokemon_data(data):
     return sprite
 
 
-# Função para obter cadeia de evolução com métodos e sprites (cacheada + sprites em paralelo)
+# Funcao para obter cadeia de evolucao com metodos e sprites (cacheada + sprites em paralelo)
 @st.cache_data(ttl=3600)
 def get_evolution_chain_with_methods(pokemon_name):
     species_data = fetch_species_data(pokemon_name)

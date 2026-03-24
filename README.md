@@ -13,8 +13,12 @@ Uma **Pokédex interativa e moderna** construída com **Python** e **Streamlit**
   <img src="assets/mid.png" alt="Seção central da Pokédex" width="70%">
 </p>
 <p align="center">
-  <img src="assets/atributos.png" alt="Gráfico de Atributos" width="70%">
-</p>
+  <p align="center">
+    <img src="assets/atributos.png" alt="Gráfico de atributos base do Pokémon: HP 78, Ataque 84, Defesa 78, Ataque Especial 109, Defesa Especial 85, Velocidade 100, com um total de 534. Barras amarelas indicam atributos padrão enquanto barras verdes destacam Ataque Especial e Velocidade como os atributos mais fortes do Pokémon." width="70%">
+  </p>
+  <p align="center">
+    <img src="assets/atributos1.png" alt="Visualização alternativa do gráfico de atributos mostrando os mesmos atributos base do Pokémon com HP 78, Ataque 84, Defesa 78, Ataque Especial 109, Defesa Especial 85 e Velocidade 100, totalizando 534, usando barras de progresso coloridas em um fundo escuro." width="70%">
+  </p>
 
 > Busque qualquer Pokémon, descubra um aleatório e veja suas informações completas na hora.
 
