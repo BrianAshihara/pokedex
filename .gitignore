@@ -1,2 +1,15 @@
 /docs
-__pycache__/
+
+# Dependencias e build
+node_modules
+dist
+*.local
+
+# Logs
+*.log
+
+# Editores e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
