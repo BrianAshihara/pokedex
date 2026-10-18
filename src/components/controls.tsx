@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { typeColor } from '../lib/format'
 import { normalizeQuery } from '../lib/pokeapi'
 
 interface Option<T extends string> {
@@ -22,6 +23,26 @@ export function SegmentedControl<T extends string>({
       {options.map((o) => (
         <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/** Chips de tipo coloridos; `selected` pode ter mais de um tipo. */
+export function TypeFilter({ types, selected, onToggle }: { types: string[]; selected: string[]; onToggle: (type: string) => void }) {
+  return (
+    <div className="ml-types" role="group" aria-label="Tipo">
+      {types.map((t) => (
+        <button
+          key={t}
+          type="button"
+          className="ml-type"
+          aria-pressed={selected.includes(t)}
+          style={{ '--type': typeColor(t) } as CSSProperties}
+          onClick={() => onToggle(t)}
+        >
+          {t}
         </button>
       ))}
     </div>

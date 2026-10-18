@@ -29,7 +29,7 @@
 
 ## Visão geral
 
-O projeto reúne em uma única tela as informações mais consultadas sobre um Pokémon: tipos, atributos base, fraquezas e resistências, habilidades, formas alternativas e a cadeia de evolução completa. A interface segue a linguagem visual dos jogos da série principal, com layout em colunas no desktop e empilhado em telas menores.
+O projeto reúne em uma única tela as informações mais consultadas sobre um Pokémon: tipos, atributos base, fraquezas e resistências, habilidades, formas alternativas e a cadeia de evolução completa. Além da ficha de cada Pokémon, há uma lista navegável de todos os Pokémon, uma seção de golpes que mostra quem aprende cada um e um laboratório com calculadora e comparador de atributos. A interface segue a linguagem visual dos jogos da série principal, com layout em colunas no desktop e empilhado em telas menores.
 
 A aplicação roda inteiramente no navegador: não há backend, e todos os dados vêm direto da PokeAPI.
 
@@ -40,6 +40,7 @@ A aplicação roda inteiramente no navegador: não há backend, e todos os dados
 - Busca por nome ou número da Pokédex nacional, tolerante a espaços, pontuação e acentos (`mr mime`, `deoxys`, `25`, `flabébé`).
 - Navegação sequencial pela numeração nacional, exibindo o nome do Pokémon anterior e do próximo.
 - Sorteio de um Pokémon aleatório entre todas as espécies disponíveis na API.
+- Lista de todos os Pokémon na página inicial, em grade com sprite, número e tipos. Filtra por nome, por até dois tipos (ex.: Fire + Flying) e por geração, e ordena por número, nome, total ou um atributo específico (ex.: os mais rápidos). Formas alternativas aparecem com um clique.
 - URLs próprias para cada Pokémon (`/pokemon/charizard`), permitindo compartilhar links e usar o histórico do navegador. Links antigos no formato `?p=charizard` continuam funcionando.
 
 ### Informações exibidas
@@ -49,13 +50,23 @@ A aplicação roda inteiramente no navegador: não há backend, e todos os dados
 | Card principal | Arte oficial, sprite em pixel ou animado, versão shiny, grito do Pokémon, tipos, categoria e marcação de lendário, mítico ou bebê |
 | Dados da Pokédex | Altura, peso, proporção de gênero, taxa de captura, experiência base, geração e descrição |
 | Habilidades | Habilidades regulares e oculta, com a descrição de cada uma |
-| Dano recebido | Multiplicadores 4×, 2×, ½×, ¼× e 0× calculados a partir da combinação de tipos |
+| Dano recebido | Multiplicadores 4×, 2×, 0.5×, 0.25× e 0× calculados a partir da combinação de tipos. Habilidades que reduzem golpes superefetivos (Filter, Solid Rock e Prism Armor) são detectadas automaticamente e geram as faixas 3× e 1.5×. Quando o Pokémon tem outras habilidades, um seletor alterna entre elas |
 | Atributos base | Hexágono no estilo de Sword/Shield, barras por faixa de valor e mínimo/máximo no nível 100 |
 | Formas alternativas | Mega, Gigantamax, formas regionais e demais variedades da espécie |
 | Evolução | Árvore completa com ramificações (ex.: Eevee, Wurmple), métodos de evolução e links para cada estágio |
-| Golpes | Golpes aprendidos por nível, ovo, MT e tutor em cada jogo, com tipo, categoria, poder, precisão, PP e efeito |
+| Golpes | Golpes aprendidos por nível, ovo, MT e tutor em cada jogo, com tipo, categoria, poder, precisão, PP e efeito. Cada golpe abre a página dele |
 
 As preferências de exibição (estilo da imagem, shiny e jogo selecionado nos golpes) ficam salvas no navegador.
+
+### Golpes
+
+Seção própria (`/golpes`), acessível pelo menu no topo.
+
+- **Lista de golpes**: todos os golpes que algum Pokémon aprende, com busca por nome, filtros de tipo, categoria e geração, e colunas ordenáveis (ex.: os mais fortes primeiro).
+- **Página do golpe** (`/golpe/flamethrower`): tipo, categoria, poder, precisão, PP, efeito e número da MT, além de todos os Pokémon que aprendem o golpe no jogo escolhido. Os Pokémon ficam separados em abas por método (nível, ovo, MT, tutor), com sprite e o nível em que aprendem, incluindo formas alternativas.
+- **Botão de voltar contextual**: volta ao Pokémon de origem ("Voltar para Charizard") ou à lista de golpes com os mesmos filtros ("Voltar para Golpes").
+
+Os filtros das listas ficam na URL, então voltar pelo navegador ou compartilhar o link mantém a lista exatamente como estava.
 
 ### Laboratório
 
@@ -79,25 +90,27 @@ Página separada (`/laboratorio`), acessível pelo menu no topo ou pelo botão "
 | Dados e cache | TanStack Query + `fetch` |
 | Testes | Vitest |
 | Lint | Oxlint |
-| Fonte de dados | PokeAPI v2 |
+| Fonte de dados | PokeAPI v2 (REST e GraphQL) |
 
 ## Arquitetura
 
 O código é dividido em camadas com responsabilidades separadas:
 
 - **`src/lib/`**: lógica sem dependência de interface.
-  - **`pokeapi.ts`**: acesso à PokeAPI. Resolve nomes, busca espécies, tipos, habilidades, golpes e cadeias de evolução, e calcula a efetividade de tipos.
+  - **`pokeapi.ts`**: acesso à PokeAPI. Resolve nomes, busca espécies, tipos, habilidades, golpes e cadeias de evolução, calcula a efetividade de tipos (incluindo o efeito de habilidades) e faz as consultas GraphQL das listas.
   - **`stats.ts`**: regras do jogo: fórmulas de atributos, naturezas e limites de IVs e EVs.
   - **`queries.ts`**: definições das consultas do TanStack Query usadas pelas telas.
   - **`format.ts`** e **`types.ts`**: formatação, cores por tipo e a tipagem dos dados da API.
-- **`src/components/`**: componentes visuais (cards, hexágono de atributos, árvore de evolução, tabela de golpes) e controles reutilizáveis (select pesquisável, abas, slider, toggle).
-- **`src/pages/`**: uma página por arquivo (`PokedexPage.tsx` e `LabPage.tsx`), responsáveis pelo layout e pelo estado de cada tela.
+- **`src/components/`**: componentes visuais (cards, hexágono de atributos, árvore de evolução, tabela de golpes, lista de Pokémon) e controles reutilizáveis (select pesquisável, abas, slider, toggle, filtro de tipos).
+- **`src/pages/`**: uma página por arquivo (`PokedexPage.tsx`, `MovesListPage.tsx`, `MovePage.tsx` e `LabPage.tsx`), responsáveis pelo layout e pelo estado de cada tela.
 - **`src/state/`**: estado do Laboratório, compartilhado entre as páginas para não se perder ao navegar.
 
 Decisões de desempenho:
 
 - **Cache em duas camadas**: as respostas da PokeAPI ficam em um cache em memória por URL, que também evita requisições duplicadas simultâneas, e o TanStack Query guarda os dados já processados por uma hora.
 - **Payload reduzido**: a resposta de `/pokemon` é compactada antes de entrar no cache (a lista de golpes, cerca de 90% do tamanho, vira um índice enxuto por jogo).
+- **GraphQL para as listas**: a lista de todos os Pokémon, a de todos os golpes e "quem aprende este golpe" usam a API GraphQL da PokeAPI. Cada uma é uma única consulta de poucas dezenas de KB comprimidos, em vez das centenas de requisições REST que seriam necessárias.
+- **Listas leves**: os sprites usam carregamento preguiçoso (só os visíveis são baixados), e a filtragem usa `useDeferredValue` para não travar a digitação.
 - **Requisições em paralelo**: tipos, habilidades, golpes, MTs e sprites da evolução são buscados em paralelo, com limite de 16 requisições simultâneas.
 - **Carregamento independente**: cada seção carrega por conta própria com um esqueleto de carregamento, então a tela aparece antes de todos os dados chegarem.
 - **Tratamento de falhas**: erros de rede não são cacheados e resultam em uma mensagem amigável na seção afetada, sem derrubar o restante da página.
@@ -144,7 +157,7 @@ pokedex/
 │   ├── components/            # Componentes visuais e controles
 │   ├── hooks/                 # Hooks reutilizáveis
 │   ├── lib/                   # PokeAPI, fórmulas, formatação, tipos e testes
-│   ├── pages/                 # Pokédex e Laboratório
+│   ├── pages/                 # Pokédex, Golpes e Laboratório
 │   ├── state/                 # Estado do Laboratório
 │   ├── styles/
 │   │   └── global.css         # Tema e estilos
@@ -160,7 +173,7 @@ pokedex/
 ## Roadmap
 
 - [ ] Autocomplete na busca, com tolerância a erros de digitação
-- [ ] Filtros por tipo, geração e categoria
+- [x] Filtros por tipo, geração e categoria
 - [ ] Montador de time com análise de cobertura de fraquezas
 - [x] Testes automatizados das regras de jogo
 - [ ] Pipeline de CI

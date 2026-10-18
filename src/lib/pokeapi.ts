@@ -14,6 +14,8 @@ import type {
   MoveData,
   MoveLearner,
   MoveLearners,
+  MoveListItem,
+  PokemonListItem,
   Pokemon,
   RawPokemon,
   Species,
@@ -558,4 +560,103 @@ export async function getMoveLearners(move: string, versionGroup: string): Promi
   }
 
   return { machine: (data.move[0]?.machines[0]?.item?.name ?? '').toUpperCase(), byMethod: result }
+}
+
+// Só golpes que algum Pokémon aprende: fora ficam Shadow, Z-Moves e Max Moves.
+const ALL_MOVES_QUERY = `{
+  move(where: { pokemonmoves: {} }, order_by: { id: asc }) {
+    name
+    power
+    accuracy
+    pp
+    move_effect_chance
+    generation_id
+    type { name }
+    movedamageclass { name }
+    movenames(where: { language: { name: { _eq: "en" } } }) { name }
+    moveeffect { moveeffecteffecttexts(where: { language: { name: { _eq: "en" } } }) { short_effect } }
+    moveflavortexts(where: { language: { name: { _eq: "en" } } }, order_by: { version_group_id: desc }, limit: 1) { flavor_text }
+  }
+}`
+
+interface AllMovesResponse {
+  move: {
+    name: string
+    power: number | null
+    accuracy: number | null
+    pp: number | null
+    move_effect_chance: number | null
+    generation_id: number
+    type: { name: string } | null
+    movedamageclass: { name: string } | null
+    movenames: { name: string }[]
+    moveeffect: { moveeffecteffecttexts: { short_effect: string }[] } | null
+    moveflavortexts: { flavor_text: string }[]
+  }[]
+}
+
+export async function getAllMoves(): Promise<MoveListItem[]> {
+  const data = await graphql<AllMovesResponse>(ALL_MOVES_QUERY, {})
+  return data.move.map((m) => {
+    let effect = m.moveeffect?.moveeffecteffecttexts[0]?.short_effect ?? ''
+    if (effect && m.move_effect_chance != null) effect = effect.replaceAll('$effect_chance', String(m.move_effect_chance))
+    return {
+      slug: m.name,
+      name: m.movenames[0]?.name || titleize(m.name),
+      type: m.type?.name ?? 'unknown',
+      category: m.movedamageclass?.name ?? 'status',
+      power: m.power,
+      accuracy: m.accuracy,
+      pp: m.pp,
+      generation: m.generation_id,
+      effect: cleanText(effect || (m.moveflavortexts[0]?.flavor_text ?? '')),
+    }
+  })
+}
+
+// Sprite pelo id: dispensa trazer o JSON de sprites de 1300 Pokémon na consulta.
+export const spriteUrl = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+
+const ALL_POKEMON_QUERY = `{
+  pokemon(order_by: { id: asc }) {
+    id
+    name
+    is_default
+    pokemon_species_id
+    pokemonspecy { generation_id }
+    pokemontypes(order_by: { slot: asc }) { type { name } }
+    pokemonstats(order_by: { stat_id: asc }) { base_stat }
+  }
+}`
+
+interface AllPokemonResponse {
+  pokemon: {
+    id: number
+    name: string
+    is_default: boolean
+    pokemon_species_id: number
+    pokemonspecy: { generation_id: number } | null
+    pokemontypes: { type: { name: string } }[]
+    pokemonstats: { base_stat: number }[]
+  }[]
+}
+
+export async function getAllPokemon(): Promise<PokemonListItem[]> {
+  const data = await graphql<AllPokemonResponse>(ALL_POKEMON_QUERY, {})
+  return data.pokemon
+    .map((p) => {
+      const stats = p.pokemonstats.map((s) => s.base_stat)
+      return {
+        name: p.name,
+        id: p.id,
+        speciesId: p.pokemon_species_id,
+        isDefault: p.is_default,
+        generation: p.pokemonspecy?.generation_id ?? 0,
+        types: p.pokemontypes.map((t) => t.type.name),
+        stats,
+        total: stats.reduce((sum, value) => sum + value, 0),
+        sprite: spriteUrl(p.id),
+      }
+    })
+    .sort((a, b) => a.speciesId - b.speciesId || a.id - b.id)
 }

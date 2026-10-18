@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState, type CSSProperties } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router'
 import { Alert, Footer, Skeleton, Spinner, TypeBadge } from '../components/common'
 import { SegmentedControl, Tabs } from '../components/controls'
 import { ChevronLeftIcon } from '../components/icons'
+import { PokemonCard } from '../components/PokemonCard'
 import { usePersistentState } from '../hooks/usePersistentState'
-import { CATEGORY_LABELS, dexNumber, displayName, machineLabel, MOVE_METHODS, typeColor } from '../lib/format'
+import { CATEGORY_LABELS, displayName, FROM_MOVE_LIST, machineLabel, MOVE_METHODS, typeColor } from '../lib/format'
 import { versionGroupLabel } from '../lib/pokeapi'
 import { moveLearnersQuery, moveQuery, moveVersionGroupsQuery } from '../lib/queries'
 import type { Move, MoveLearner } from '../lib/types'
@@ -20,22 +21,6 @@ const SORT_OPTIONS: { value: LearnerSort; label: string }[] = [
 
 function levelLabel(level: number): string {
   return level === 0 ? 'Evo.' : `Nv ${level}`
-}
-
-function LearnerCard({ learner, method }: { learner: MoveLearner; method: string }) {
-  return (
-    <Link className="learner" to={`/pokemon/${learner.name}`}>
-      {learner.sprite ? <img src={learner.sprite} alt="" loading="lazy" /> : <div className="img-placeholder" />}
-      <span className="learner-no">{dexNumber(learner.speciesId)}</span>
-      <span className="learner-name">{displayName(learner.name)}</span>
-      <span className="types">
-        {learner.types.map((t) => (
-          <TypeBadge key={t} type={t} small />
-        ))}
-      </span>
-      {method === 'level-up' && <span className="learner-how">{learner.levels.map(levelLabel).join(' · ')}</span>}
-    </Link>
-  )
 }
 
 function MoveSummary({ move, machine }: { move: Move; machine: string }) {
@@ -109,7 +94,14 @@ function Learners({ slug, versionGroup }: { slug: string; versionGroup: string }
       {rows.length ? (
         <div className="learner-grid">
           {rows.map((r) => (
-            <LearnerCard key={r.name} learner={r} method={current.method} />
+            <PokemonCard
+              key={r.name}
+              name={r.name}
+              speciesId={r.speciesId}
+              types={r.types}
+              sprite={r.sprite}
+              note={current.method === 'level-up' ? r.levels.map(levelLabel).join(' · ') : undefined}
+            />
           ))}
         </div>
       ) : (
@@ -136,10 +128,14 @@ export function MovePage() {
   const versionGroup = [requested, savedGroup].find((vg) => vg && available.includes(vg)) ?? available[available.length - 1] ?? null
 
   const from = params.get('de')
+  // Vindo da lista de Golpes, o state guarda a busca/filtros dela para o botão de voltar.
+  const location = useLocation()
+  const listSearch = (location.state as { list?: string } | null)?.list ?? ''
+  const back = from === FROM_MOVE_LIST ? { to: `/golpes${listSearch}`, label: 'Golpes' } : from ? { to: `/pokemon/${from}`, label: displayName(from) } : null
 
   const changeGroup = (vg: string) => {
     setSavedGroup(vg)
-    setParams({ jogo: vg, ...(from && { de: from }) }, { replace: true })
+    setParams({ jogo: vg, ...(from && { de: from }) }, { replace: true, state: location.state })
   }
 
   const learners = useQuery({ ...moveLearnersQuery(slug, versionGroup ?? ''), enabled: !!versionGroup })
@@ -185,10 +181,10 @@ export function MovePage() {
   return (
     <>
       <DexHeader />
-      {from && (
-        <Link className="btn back-link" to={`/pokemon/${from}`}>
+      {back && (
+        <Link className="btn back-link" to={back.to}>
           <ChevronLeftIcon />
-          Voltar para {displayName(from)}
+          Voltar para {back.label}
         </Link>
       )}
       {content}

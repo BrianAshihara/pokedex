@@ -92,6 +92,15 @@ export function machineLabel(label: string): string {
 }
 
 /** `from` é o Pokémon de origem, usado pelo botão "Voltar" da página do golpe. */
+/** Valor de `?de=` quando a página do golpe foi aberta pela lista de Golpes (e não por um Pokémon). */
+export const FROM_MOVE_LIST = 'golpes'
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+
+export function generationLabel(generation: number): string {
+  return ROMAN[generation] ?? String(generation)
+}
+
 export function moveLink(slug: string, versionGroup?: string, from?: string): string {
   const params = new URLSearchParams()
   if (versionGroup) params.set('jogo', versionGroup)

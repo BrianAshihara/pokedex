@@ -5,8 +5,9 @@ import { BaseStatsRadar, StatBars } from '../components/charts'
 import { Alert, Brand, Card, Footer, Skeleton } from '../components/common'
 import { SegmentedControl, Toggle } from '../components/controls'
 import { EvolutionCard } from '../components/EvolutionCard'
-import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon } from '../components/icons'
+import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon, SearchIcon } from '../components/icons'
 import { MovesPanel } from '../components/MovesPanel'
+import { PokemonBrowser } from '../components/PokemonBrowser'
 import { AbilitiesCard, Hero, InfoCard, MatchupsCard, type ImageMode } from '../components/pokemon'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { accentColor, dexNumber, displayName } from '../lib/format'
@@ -14,16 +15,6 @@ import { getFlavorText, getGenus } from '../lib/pokeapi'
 import { abilitiesQuery, evolutionQuery, matchupsQuery, pokemonQuery, speciesCountQuery, speciesQuery } from '../lib/queries'
 import { baseStats } from '../lib/stats'
 import type { Pokemon, PokemonSprites, Sprites } from '../lib/types'
-
-const QUICK_PICKS: [number, string][] = [
-  [25, 'pikachu'],
-  [6, 'charizard'],
-  [94, 'gengar'],
-  [133, 'eevee'],
-  [150, 'mewtwo'],
-  [448, 'lucario'],
-  [658, 'greninja'],
-]
 
 const IMAGE_MODES: { value: ImageMode; label: string }[] = [
   { value: 'art', label: 'Arte' },
@@ -50,10 +41,11 @@ export function DexHeader() {
   return (
     <div className="page-header">
       <Brand />
-      <form onSubmit={onSubmit} role="search">
+      <form className="dex-search" onSubmit={onSubmit} role="search">
         <label htmlFor="search" className="visually-hidden">
           Buscar Pokémon
         </label>
+        <SearchIcon className="dex-search-icon" />
         <input
           id="search"
           className="input"
@@ -62,6 +54,9 @@ export function DexHeader() {
           placeholder="Buscar por nome ou número (ex: pikachu, 25, mr mime)"
           autoComplete="off"
         />
+        <button type="submit" className="dex-search-go" aria-label="Buscar" disabled={!search.trim()}>
+          <ChevronRightIcon />
+        </button>
       </form>
       <button type="button" className="btn primary block" onClick={goRandom} disabled={!speciesCount}>
         <DiceIcon />
@@ -85,19 +80,10 @@ export function HomePage() {
   return (
     <>
       <DexHeader />
-      <Card title="Comece por aqui" style={{ marginTop: 18, textAlign: 'center' }}>
-        <p className="muted" style={{ margin: '0 0 16px' }}>
-          Busque um Pokémon pelo nome ou número, sorteie um aleatório ou escolha um abaixo.
-        </p>
-        <div className="quick-picks">
-          {QUICK_PICKS.map(([id, name]) => (
-            <Link key={name} className="evo-node" to={`/pokemon/${name}`}>
-              <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`} alt={displayName(name)} />
-              <span className="evo-name">{displayName(name)}</span>
-            </Link>
-          ))}
-        </div>
-      </Card>
+      <section className="panel" style={{ marginTop: 18 }}>
+        <h2 className="card-title">Todos os Pokémon</h2>
+        <PokemonBrowser />
+      </section>
       <Footer />
     </>
   )

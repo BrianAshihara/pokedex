@@ -23,6 +23,20 @@ export const FlaskIcon = (props: IconProps) => (
   </Icon>
 )
 
+export const SearchIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Icon>
+)
+
+export const SwordIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
+    <path d="m13 19 6-6M16 16l4 4M19 21l2-2" />
+  </Icon>
+)
+
 export const DiceIcon = (props: IconProps) => (
   <Icon {...props}>
     <rect x="3" y="3" width="18" height="18" rx="3" />

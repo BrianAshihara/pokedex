@@ -34,3 +34,7 @@ export const moveVersionGroupsQuery = (slug: string) =>
 
 export const moveLearnersQuery = (slug: string, versionGroup: string) =>
   queryOptions({ queryKey: ['move-learners', slug, versionGroup], queryFn: () => api.getMoveLearners(slug, versionGroup) })
+
+export const allMovesQuery = () => queryOptions({ queryKey: ['all-moves'], queryFn: api.getAllMoves })
+
+export const allPokemonQuery = () => queryOptions({ queryKey: ['all-pokemon'], queryFn: api.getAllPokemon })

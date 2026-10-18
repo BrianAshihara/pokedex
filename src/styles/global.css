@@ -464,6 +464,64 @@ input[type='range']:focus-visible::-webkit-slider-thumb {
 .page-header.lab {
   grid-template-columns: 1.1fr 3.5fr;
 }
+.page-header > .btn {
+  min-height: 3.3rem;
+}
+
+/* Busca principal: precisa se destacar dos filtros comuns da lista logo abaixo. */
+.dex-search {
+  position: relative;
+}
+.dex-search .input {
+  min-height: 3.3rem;
+  padding-left: 3rem;
+  padding-right: 3.6rem;
+  font-size: 1rem;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1.5px solid rgba(255, 203, 5, 0.5);
+  box-shadow: 0 0 0 4px rgba(255, 203, 5, 0.07), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.dex-search .input:focus {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 4px rgba(255, 203, 5, 0.22), 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.dex-search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+  color: var(--yellow);
+  pointer-events: none;
+}
+.dex-search-go {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 9px;
+  background: var(--yellow);
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: opacity 0.15s, filter 0.15s;
+}
+.dex-search-go:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.dex-search-go:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.dex-search-go svg {
+  width: 20px;
+  height: 20px;
+}
 
 .dex-nav {
   display: grid;
@@ -1112,13 +1170,6 @@ input[type='range']:focus-visible::-webkit-slider-thumb {
   border-bottom: 5px solid transparent;
 }
 
-.quick-picks {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
 .moves-head {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -1537,6 +1588,99 @@ input[type='range']:focus-visible::-webkit-slider-thumb {
   white-space: nowrap;
 }
 
+/* ---------- Lista de golpes (/golpes) ---------- */
+
+.ml-filters {
+  display: grid;
+  grid-template-columns: 2fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.ml-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+.ml-type {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--type) 75%, #fff 25%);
+  background: color-mix(in srgb, var(--type) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--type) 45%, transparent);
+  transition: background 0.15s, color 0.15s;
+}
+.ml-type:hover {
+  background: color-mix(in srgb, var(--type) 25%, transparent);
+}
+.ml-type[aria-pressed='true'] {
+  color: #fff;
+  background: var(--type);
+  border-color: color-mix(in srgb, var(--type) 60%, #000 40%);
+}
+.ml-count {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--yellow);
+  cursor: pointer;
+}
+.link-btn:hover {
+  text-decoration: underline;
+}
+.ml-scroll {
+  max-height: 70vh;
+}
+.ml-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+.ml-sort:hover {
+  color: var(--text);
+}
+th[aria-sort] .ml-sort {
+  color: var(--yellow);
+}
+.ml-arrow {
+  font-size: 0.55rem;
+  min-width: 0.6rem;
+}
+
+/* ---------- Lista de Pokémon (página inicial) ---------- */
+
+.pb-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+}
+.pb-forms {
+  margin-left: auto;
+}
+
 /* ---------- Responsivo ---------- */
 
 @media (max-width: 1100px) {
@@ -1575,7 +1719,9 @@ input[type='range']:focus-visible::-webkit-slider-thumb {
   .lab-calc-top,
   .lab-picks,
   .cmp-cards,
-  .moves-head {
+  .moves-head,
+  .ml-filters,
+  .pb-filters {
     grid-template-columns: 1fr;
   }
   .dex-nav .next,

@@ -174,6 +174,19 @@ export interface MoveLearners {
   byMethod: Record<string, MoveLearner[]>
 }
 
+/** Linha da lista de todos os golpes (página /golpes). */
+export interface MoveListItem {
+  slug: string
+  name: string
+  type: string
+  category: string
+  power: number | null
+  accuracy: number | null
+  pp: number | null
+  generation: number
+  effect: string
+}
+
 export interface LearnedMove extends Move {
   level: number
   machine: string
@@ -192,3 +205,18 @@ export interface EvolutionTree {
 
 /** Multiplicador de dano → tipos atacantes. Só multiplicadores diferentes de 1. */
 export type Matchups = Map<number, string[]>
+
+/** Linha da lista de todos os Pokémon (página inicial). */
+export interface PokemonListItem {
+  name: string
+  id: number
+  speciesId: number
+  /** false para formas alternativas (Megas, regionais, Gigantamax…). */
+  isDefault: boolean
+  generation: number
+  types: string[]
+  /** Na ordem de STATS: HP, Attack, Defense, Sp. Atk, Sp. Def, Speed. */
+  stats: number[]
+  total: number
+  sprite: string
+}
