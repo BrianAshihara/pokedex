@@ -12,6 +12,8 @@ import type {
   Matchups,
   Move,
   MoveData,
+  MoveLearner,
+  MoveLearners,
   Pokemon,
   RawPokemon,
   Species,
@@ -19,6 +21,7 @@ import type {
 } from './types'
 
 const BASE_URL = 'https://pokeapi.co/api/v2'
+const GRAPHQL_URL = 'https://graphql.pokeapi.co/v1beta2'
 const REQUEST_TIMEOUT = 10_000
 const FALLBACK_SPECIES_COUNT = 1025
 const MAX_PARALLEL_REQUESTS = 16
@@ -195,6 +198,19 @@ export async function getTypeMatchups(types: Pokemon['types']): Promise<Matchups
   return matchups
 }
 
+/** Habilidades que reduzem dano super efetivo para ×0,75 (2× → 1,5×, 4× → 3×). */
+export const SE_REDUCING_ABILITIES = new Set(['filter', 'solid-rock', 'prism-armor'])
+
+export function applyAbilityToMatchups(matchups: Matchups, abilitySlug: string | null): Matchups {
+  if (!abilitySlug || !SE_REDUCING_ABILITIES.has(abilitySlug)) return matchups
+  const adjusted: Matchups = new Map()
+  for (const [multiplier, typeNames] of matchups) {
+    const next = multiplier > 1 ? multiplier * 0.75 : multiplier
+    adjusted.set(next, [...(adjusted.get(next) ?? []), ...typeNames])
+  }
+  return adjusted
+}
+
 function cleanText(text: string): string {
   return text.replaceAll('\f', ' ').replaceAll('\n', ' ').replaceAll('­ ', '').split(/\s+/).filter(Boolean).join(' ')
 }
@@ -343,9 +359,13 @@ export function versionGroupLabel(name: string): string {
   return VERSION_LABELS.get(name) ?? titleize(name)
 }
 
-export function sortedVersionGroups(learnset: Learnset): string[] {
+export function sortVersionGroups(names: string[]): string[] {
   const order = (vg: string) => VERSION_ORDER.get(vg) ?? VERSION_ORDER.size
-  return Object.keys(learnset).sort((a, b) => order(a) - order(b) || a.localeCompare(b))
+  return [...names].sort((a, b) => order(a) - order(b) || a.localeCompare(b))
+}
+
+export function sortedVersionGroups(learnset: Learnset): string[] {
+  return sortVersionGroups(Object.keys(learnset))
 }
 
 export function defaultVersionGroup(learnset: Learnset): string | null {
@@ -364,7 +384,7 @@ function englishName(data: { name: string; names: { name: string; language: { na
   return data.names.find((n) => n.language.name === 'en')?.name || titleize(data.name)
 }
 
-function getAbility(name: string): Promise<Omit<Ability, 'hidden'>> {
+function getAbility(name: string): Promise<Omit<Ability, 'slug' | 'hidden'>> {
   return cached(`ability:${name}`, async () => {
     const data = await getJson<AbilityData>(`${BASE_URL}/ability/${name}`)
     if (!data) return { name: titleize(name), description: '' }
@@ -375,10 +395,10 @@ function getAbility(name: string): Promise<Omit<Ability, 'hidden'>> {
 
 export async function getAbilities(abilities: Pokemon['abilities']): Promise<Ability[]> {
   const details = await mapLimit(abilities, (a) => getAbility(a.ability.name))
-  return abilities.map((a, i) => ({ ...details[i], hidden: a.is_hidden }))
+  return abilities.map((a, i) => ({ ...details[i], slug: a.ability.name, hidden: a.is_hidden }))
 }
 
-function getMove(name: string): Promise<Move | null> {
+export function getMove(name: string): Promise<Move | null> {
   return cached(`move:${name}`, async () => {
     const data = await getJson<MoveData>(`${BASE_URL}/move/${name}`)
     if (!data) return null
@@ -386,6 +406,7 @@ function getMove(name: string): Promise<Move | null> {
     if (effect && data.effect_chance != null) effect = effect.replaceAll('$effect_chance', String(data.effect_chance))
     return {
       name: englishName(data),
+      slug: data.name,
       type: data.type?.name ?? 'unknown',
       category: data.damage_class?.name ?? 'status',
       power: data.power,
@@ -445,4 +466,96 @@ export async function getLearnset(learnset: Learnset, versionGroup: string): Pro
     else rows.sort(byName)
   }
   return grouped
+}
+
+// "Quem aprende este golpe" via GraphQL: uma consulta em vez de centenas de /pokemon/{nome}.
+
+async function graphql<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+  const response = await fetch(GRAPHQL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT * 2),
+  })
+  if (!response.ok) throw new Error(`PokeAPI GraphQL respondeu ${response.status}`)
+  const body = (await response.json()) as { data?: T; errors?: { message: string }[] }
+  if (body.errors?.length || !body.data) throw new Error(body.errors?.[0]?.message ?? 'Resposta GraphQL vazia')
+  return body.data
+}
+
+const MOVE_VERSION_GROUPS_QUERY = `query ($move: String!) {
+  pokemonmove(where: { move: { name: { _eq: $move } } }, distinct_on: version_group_id) { versiongroup { name } }
+}`
+
+export async function getMoveVersionGroups(move: string): Promise<string[]> {
+  const data = await graphql<{ pokemonmove: { versiongroup: { name: string } }[] }>(MOVE_VERSION_GROUPS_QUERY, { move })
+  return sortVersionGroups(data.pokemonmove.map((row) => row.versiongroup.name))
+}
+
+const MOVE_LEARNERS_QUERY = `query ($move: String!, $vg: String!) {
+  move(where: { name: { _eq: $move } }) {
+    machines(where: { versiongroup: { name: { _eq: $vg } } }) { item { name } }
+  }
+  pokemonmove(where: { move: { name: { _eq: $move } }, versiongroup: { name: { _eq: $vg } } }) {
+    level
+    movelearnmethod { name }
+    pokemon {
+      id
+      name
+      pokemon_species_id
+      pokemontypes(order_by: { slot: asc }) { type { name } }
+      pokemonsprites { sprites(path: "front_default") }
+    }
+  }
+}`
+
+interface MoveLearnersResponse {
+  move: { machines: { item: { name: string } | null }[] }[]
+  pokemonmove: {
+    level: number
+    movelearnmethod: { name: string }
+    pokemon: {
+      id: number
+      name: string
+      pokemon_species_id: number
+      pokemontypes: { type: { name: string } }[]
+      pokemonsprites: { sprites: string | null }[]
+    }
+  }[]
+}
+
+export async function getMoveLearners(move: string, versionGroup: string): Promise<MoveLearners> {
+  const data = await graphql<MoveLearnersResponse>(MOVE_LEARNERS_QUERY, { move, vg: versionGroup })
+
+  // Um Pokémon pode aparecer várias vezes no mesmo método (ex: level-up no Nv 1 e no Nv 30).
+  const byMethod: Record<string, Map<string, MoveLearner>> = {}
+  for (const row of data.pokemonmove) {
+    const { pokemon } = row
+    const method = row.movelearnmethod.name
+    const learners = (byMethod[method] ??= new Map())
+    let learner = learners.get(pokemon.name)
+    if (!learner) {
+      learner = {
+        name: pokemon.name,
+        id: pokemon.id,
+        speciesId: pokemon.pokemon_species_id,
+        types: pokemon.pokemontypes.map((t) => t.type.name),
+        sprite: pokemon.pokemonsprites[0]?.sprites ?? null,
+        levels: [],
+      }
+      learners.set(pokemon.name, learner)
+    }
+    if (method === 'level-up' && !learner.levels.includes(row.level)) learner.levels.push(row.level)
+  }
+
+  const byDex = (a: MoveLearner, b: MoveLearner) => a.speciesId - b.speciesId || a.id - b.id
+  const result: Record<string, MoveLearner[]> = {}
+  for (const [method, learners] of Object.entries(byMethod)) {
+    const rows = [...learners.values()]
+    for (const row of rows) row.levels.sort((a, b) => a - b)
+    rows.sort(byDex)
+    result[method] = rows
+  }
+
+  return { machine: (data.move[0]?.machines[0]?.item?.name ?? '').toUpperCase(), byMethod: result }
 }

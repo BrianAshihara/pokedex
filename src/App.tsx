@@ -2,12 +2,13 @@ import { useEffect } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router'
 import { BookIcon, FlaskIcon } from './components/icons'
 import { LabPage } from './pages/LabPage'
+import { MovePage } from './pages/MovePage'
 import { HomePage, PokemonPage } from './pages/PokedexPage'
 import { LabStateProvider } from './state/LabState'
 
 function TopNav() {
   const { pathname } = useLocation()
-  const onDex = pathname === '/' || pathname.startsWith('/pokemon')
+  const onDex = pathname === '/' || pathname.startsWith('/pokemon') || pathname.startsWith('/golpe')
   return (
     <nav className="topnav" aria-label="Páginas">
       <NavLink to="/" className={onDex ? 'active' : undefined}>
@@ -40,6 +41,7 @@ export function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/pokemon/:ref" element={<PokemonPage />} />
+            <Route path="/golpe/:slug" element={<MovePage />} />
             <Route path="/laboratorio" element={<LabPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

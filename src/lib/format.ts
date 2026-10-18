@@ -70,3 +70,32 @@ export function statColor(value: number): string {
 export function pokemonArt(pokemon: Pokemon): string | null {
   return pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default || null
 }
+
+export const MOVE_METHODS: [string, string][] = [
+  ['level-up', 'Nível'],
+  ['egg', 'Ovo'],
+  ['machine', 'MT'],
+  ['tutor', 'Tutor'],
+]
+
+export const CATEGORY_LABELS: Record<string, string> = { physical: 'Físico', special: 'Especial', status: 'Status' }
+
+const MACHINE_PREFIXES: [string, string][] = [
+  ['TM', 'MT'],
+  ['HM', 'MO'],
+  ['TR', 'DT'],
+]
+
+export function machineLabel(label: string): string {
+  const match = MACHINE_PREFIXES.find(([en]) => label.startsWith(en))
+  return match ? match[1] + label.slice(match[0].length) : label || '?'
+}
+
+/** `from` é o Pokémon de origem, usado pelo botão "Voltar" da página do golpe. */
+export function moveLink(slug: string, versionGroup?: string, from?: string): string {
+  const params = new URLSearchParams()
+  if (versionGroup) params.set('jogo', versionGroup)
+  if (from) params.set('de', from)
+  const query = params.toString()
+  return `/golpe/${slug}` + (query ? `?${query}` : '')
+}

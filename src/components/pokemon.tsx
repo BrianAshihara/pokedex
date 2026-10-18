@@ -1,7 +1,9 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { decimal, dexNumber, displayName, hexToRgba, pokemonArt, typeColor, typeNames } from '../lib/format'
+import { applyAbilityToMatchups, SE_REDUCING_ABILITIES } from '../lib/pokeapi'
 import type { Ability, Matchups, Pokemon, Species } from '../lib/types'
 import { Card, TypeBadge } from './common'
+import { SegmentedControl } from './controls'
 import { Pokeball } from './Pokeball'
 
 export type ImageMode = 'art' | 'pixel' | 'anim'
@@ -115,16 +117,38 @@ export function AbilitiesCard({ abilities, accent }: { abilities: Ability[]; acc
 
 const MATCHUP_ROWS: [number, string, string][] = [
   [4, 'x4', '4×'],
+  [3, 'x3', '3×'],
   [2, 'x2', '2×'],
-  [0.5, 'x05', '½×'],
-  [0.25, 'x025', '¼×'],
+  [1.5, 'x15', '1.5×'],
+  [0.5, 'x05', '0.5×'],
+  [0.25, 'x025', '0.25×'],
   [0, 'x0', '0×'],
 ]
 
-export function MatchupsCard({ matchups, accent }: { matchups: Matchups; accent: string }) {
+const NO_ABILITY = 'none'
+
+/** Remonte com `key` ao trocar de Pokémon para resetar a habilidade escolhida. */
+export function MatchupsCard({ matchups: baseMatchups, abilities, accent }: { matchups: Matchups; abilities: Ability[]; accent: string }) {
+  const relevant = abilities.filter((a, i, all) => SE_REDUCING_ABILITIES.has(a.slug) && all.findIndex((b) => b.slug === a.slug) === i)
+  // Se o Pokémon só tem a habilidade (ex: Mega Aggron, Necrozma), aplica direto, sem seletor.
+  const guaranteed = abilities.length > 0 && abilities.every((a) => SE_REDUCING_ABILITIES.has(a.slug))
+  // Por padrão já considera a habilidade redutora; o seletor permite trocar por "Outra habilidade".
+  const [chosen, setChosen] = useState<string | null>(null)
+  const selected = chosen ?? relevant[0]?.slug ?? NO_ABILITY
+  const matchups = applyAbilityToMatchups(baseMatchups, selected === NO_ABILITY ? null : selected)
   const rows = MATCHUP_ROWS.filter(([mult]) => matchups.get(mult)?.length)
   return (
     <Card title="Dano recebido" accent={accent}>
+      {relevant.length > 0 && !guaranteed && (
+        <div className="mu-ability">
+          <SegmentedControl
+            label="Habilidade considerada"
+            value={selected}
+            onChange={setChosen}
+            options={[{ value: NO_ABILITY, label: 'Outra habilidade' }, ...relevant.map((a) => ({ value: a.slug, label: a.name }))]}
+          />
+        </div>
+      )}
       {rows.length === 0 && <span className="muted">Sem dados de tipo.</span>}
       {rows.map(([mult, cls, label]) => (
         <div key={cls} className="mu-row">

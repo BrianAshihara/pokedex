@@ -138,12 +138,16 @@ export interface MachineData {
 
 export interface Ability {
   name: string
+  /** Identificador da PokeAPI, ex: "solid-rock". */
+  slug: string
   description: string
   hidden: boolean
 }
 
 export interface Move {
   name: string
+  /** Identificador da PokeAPI, ex: "flamethrower". */
+  slug: string
   type: string
   category: string
   power: number | null
@@ -151,6 +155,23 @@ export interface Move {
   pp: number | null
   effect: string
   machines: Record<string, string>
+}
+
+/** Pokémon (ou forma) que aprende um golpe num jogo, por um método. */
+export interface MoveLearner {
+  name: string
+  id: number
+  speciesId: number
+  types: string[]
+  sprite: string | null
+  /** Só preenchido em level-up; 0 = aprende ao evoluir. */
+  levels: number[]
+}
+
+export interface MoveLearners {
+  /** Item da máquina naquele jogo, ex: "TM125"; vazio se o golpe não é MT. */
+  machine: string
+  byMethod: Record<string, MoveLearner[]>
 }
 
 export interface LearnedMove extends Move {

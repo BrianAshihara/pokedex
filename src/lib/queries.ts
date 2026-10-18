@@ -26,3 +26,11 @@ export const learnsetQuery = (pokemonName: string, learnset: Learnset, versionGr
     queryKey: ['learnset', pokemonName, versionGroup],
     queryFn: () => api.getLearnset(learnset, versionGroup),
   })
+
+export const moveQuery = (slug: string) => queryOptions({ queryKey: ['move', slug], queryFn: () => api.getMove(slug) })
+
+export const moveVersionGroupsQuery = (slug: string) =>
+  queryOptions({ queryKey: ['move-version-groups', slug], queryFn: () => api.getMoveVersionGroups(slug) })
+
+export const moveLearnersQuery = (slug: string, versionGroup: string) =>
+  queryOptions({ queryKey: ['move-learners', slug, versionGroup], queryFn: () => api.getMoveLearners(slug, versionGroup) })

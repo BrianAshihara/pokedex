@@ -31,7 +31,7 @@ const IMAGE_MODES: { value: ImageMode; label: string }[] = [
   { value: 'anim', label: 'Animado' },
 ]
 
-function DexHeader() {
+export function DexHeader() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const { data: speciesCount } = useQuery(speciesCountQuery())
@@ -251,7 +251,7 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
         <div>
           <InfoCard pokemon={pokemon} species={species} flavor={getFlavorText(species)} accent={accent} />
           {abilities.data ? <AbilitiesCard abilities={abilities.data} accent={accent} /> : abilities.isError ? apiSlow : <Skeleton height={160} />}
-          {matchups.data ? <MatchupsCard matchups={matchups.data} accent={accent} /> : matchups.isError ? apiSlow : <Skeleton height={180} />}
+          {matchups.data ? <MatchupsCard key={pokemon.name} matchups={matchups.data} abilities={abilities.data ?? []} accent={accent} /> : matchups.isError ? apiSlow : <Skeleton height={180} />}
         </div>
 
         <div>

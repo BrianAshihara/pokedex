@@ -1,30 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { CATEGORY_LABELS, machineLabel, MOVE_METHODS, moveLink } from '../lib/format'
 import { defaultVersionGroup, sortedVersionGroups, versionGroupLabel } from '../lib/pokeapi'
 import { learnsetQuery } from '../lib/queries'
 import type { LearnedMove, Pokemon } from '../lib/types'
 import { Alert, Spinner, TypeBadge } from './common'
 import { Tabs } from './controls'
 
-const MOVE_METHODS: [string, string][] = [
-  ['level-up', 'Nível'],
-  ['egg', 'Ovo'],
-  ['machine', 'MT'],
-  ['tutor', 'Tutor'],
-]
-const CATEGORY_LABELS: Record<string, string> = { physical: 'Físico', special: 'Especial', status: 'Status' }
-const MACHINE_PREFIXES: [string, string][] = [
-  ['TM', 'MT'],
-  ['HM', 'MO'],
-  ['TR', 'DT'],
-]
-
-function machineLabel(label: string): string {
-  const match = MACHINE_PREFIXES.find(([en]) => label.startsWith(en))
-  return match ? match[1] + label.slice(match[0].length) : label || '?'
-}
-
-function MovesTable({ rows, method }: { rows: LearnedMove[]; method: string }) {
+function MovesTable({ rows, method, versionGroup, pokemonName }: { rows: LearnedMove[]; method: string; versionGroup: string; pokemonName: string }) {
+  const navigate = useNavigate()
   const firstHeader = method === 'level-up' ? 'Nv.' : method === 'machine' ? 'MT' : null
   return (
     <div className="mv-scroll">
@@ -43,10 +28,14 @@ function MovesTable({ rows, method }: { rows: LearnedMove[]; method: string }) {
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={`${r.name}-${r.level}-${i}`}>
+            <tr key={`${r.name}-${r.level}-${i}`} className="mv-row" onClick={() => navigate(moveLink(r.slug, versionGroup, pokemonName))}>
               {method === 'level-up' && <td className="mv-first">{r.level === 0 ? 'Evo.' : r.level}</td>}
               {method === 'machine' && <td className="mv-first">{machineLabel(r.machine)}</td>}
-              <td className="mv-name">{r.name}</td>
+              <td className="mv-name">
+                <Link to={moveLink(r.slug, versionGroup, pokemonName)} onClick={(e) => e.stopPropagation()}>
+                  {r.name}
+                </Link>
+              </td>
               <td>
                 <TypeBadge type={r.type} small />
               </td>
@@ -107,7 +96,7 @@ export function MovesPanel({ pokemon, versionGroup, onVersionGroupChange }: Move
           active={current.method}
           onChange={setActiveTab}
         />
-        <MovesTable rows={current.rows} method={current.method} />
+        <MovesTable rows={current.rows} method={current.method} versionGroup={selected} pokemonName={pokemon.name} />
       </>
     ) : (
       <p className="caption">Nenhum golpe registrado neste jogo.</p>

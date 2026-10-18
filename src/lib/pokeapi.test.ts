@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defaultVersionGroup, normalizeQuery, sanitizeLookupName, sortedVersionGroups, summarizeEvolutionMethods, versionGroupLabel } from './pokeapi'
+import { applyAbilityToMatchups, defaultVersionGroup, normalizeQuery, sanitizeLookupName, sortedVersionGroups, summarizeEvolutionMethods, versionGroupLabel } from './pokeapi'
 import type { EvolutionDetail } from './types'
 
 const detail = (fields: Partial<EvolutionDetail>) => fields as EvolutionDetail
@@ -53,5 +53,28 @@ describe('jogos', () => {
   it('formata nomes de jogos desconhecidos', () => {
     expect(versionGroupLabel('sword-shield')).toBe('Sword / Shield')
     expect(versionGroupLabel('new-game')).toBe('New Game')
+  })
+})
+
+describe('applyAbilityToMatchups', () => {
+  // Aggron-Mega (Steel): fraco a Fighting/Ground 2×, imune a Poison.
+  const steel = new Map([
+    [2, ['fighting', 'ground']],
+    [0.5, ['normal', 'flying']],
+    [0, ['poison']],
+  ])
+
+  it('Filter reduz super efetivo para 1,5× e 3×', () => {
+    const result = applyAbilityToMatchups(steel, 'filter')
+    expect(result.get(1.5)).toEqual(['fighting', 'ground'])
+    expect(result.has(2)).toBe(false)
+    expect(result.get(0.5)).toEqual(['normal', 'flying'])
+    expect(result.get(0)).toEqual(['poison'])
+    expect(applyAbilityToMatchups(new Map([[4, ['ice']]]), 'solid-rock').get(3)).toEqual(['ice'])
+  })
+
+  it('ignora habilidades sem efeito na grade', () => {
+    expect(applyAbilityToMatchups(steel, 'sturdy')).toBe(steel)
+    expect(applyAbilityToMatchups(steel, null)).toBe(steel)
   })
 })
