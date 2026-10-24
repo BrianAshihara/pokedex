@@ -33,8 +33,8 @@ describe('naturezas', () => {
   })
 
   it('gera o rótulo da natureza', () => {
-    expect(natureLabel('Hardy')).toBe('Hardy (neutra)')
-    expect(natureLabel('Timid')).toBe('Timid (+Speed, -Attack)')
+    expect(natureLabel('Hardy', 'neutra')).toBe('Hardy (neutra)')
+    expect(natureLabel('Timid', 'neutra')).toBe('Timid (+Speed, -Attack)')
   })
 })
 

@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useI18n } from '../i18n/I18nProvider'
 import { typeColor } from '../lib/format'
 import { normalizeQuery } from '../lib/pokeapi'
 
@@ -31,15 +32,16 @@ export function SegmentedControl<T extends string>({
 
 /** Chips de tipo coloridos; `selected` pode ter mais de um tipo. */
 export function TypeFilter({ types, selected, onToggle }: { types: string[]; selected: string[]; onToggle: (type: string) => void }) {
+  const { t } = useI18n()
   return (
-    <div className="ml-types" role="group" aria-label="Tipo">
+    <div className="ml-types" role="group" aria-label={t.common.type}>
       {types.map((t) => (
         <button
           key={t}
           type="button"
-          className="ml-type"
+          className="type-badge sm ml-type"
           aria-pressed={selected.includes(t)}
-          style={{ '--type': typeColor(t) } as CSSProperties}
+          style={{ '--t': typeColor(t) } as CSSProperties}
           onClick={() => onToggle(t)}
         >
           {t}
@@ -186,6 +188,7 @@ export function Combobox<T extends string>({
   getLabel: (value: T) => string
 }) {
   const listId = useId()
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [highlight, setHighlight] = useState(0)
@@ -249,7 +252,7 @@ export function Combobox<T extends string>({
       />
       {open && (
         <ul className="combobox-list" id={listId} role="listbox" ref={listRef}>
-          {filtered.length === 0 && <li className="empty">Nenhum resultado</li>}
+          {filtered.length === 0 && <li className="empty">{t.common.noResults}</li>}
           {filtered.map((option, i) => (
             <li
               key={option}

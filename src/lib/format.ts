@@ -51,11 +51,11 @@ export function dexNumber(id: number): string {
   return `#${String(id).padStart(4, '0')}`
 }
 
-/** Número com vírgula decimal, sem zeros desnecessários (ex.: 87,5). */
-export function decimal(value: number, digits = 1, trimZeros = false): string {
+/** Número com o separador decimal do idioma, opcionalmente sem zeros desnecessários (ex.: 87,5). */
+export function decimal(value: number, separator: string, digits = 1, trimZeros = false): string {
   let text = value.toFixed(digits)
   if (trimZeros) text = text.replace(/\.?0+$/, '')
-  return text.replace('.', ',')
+  return text.replace('.', separator)
 }
 
 export function statColor(value: number): string {
@@ -71,24 +71,20 @@ export function pokemonArt(pokemon: Pokemon): string | null {
   return pokemon.sprites.other?.['official-artwork']?.front_default || pokemon.sprites.front_default || null
 }
 
-export const MOVE_METHODS: [string, string][] = [
-  ['level-up', 'Nível'],
-  ['egg', 'Ovo'],
-  ['machine', 'MT'],
-  ['tutor', 'Tutor'],
+/** Métodos com aba própria, nesta ordem; os rótulos ficam no dicionário (t.moves.methods). */
+export const MOVE_METHODS = [
+  'level-up',
+  'egg',
+  'machine',
+  'tutor',
+  // Pokémon Champions não tem nível, ovo ou MT: cada Pokémon tem uma lista fixa de golpes treináveis.
+  'train',
 ]
 
-export const CATEGORY_LABELS: Record<string, string> = { physical: 'Físico', special: 'Especial', status: 'Status' }
-
-const MACHINE_PREFIXES: [string, string][] = [
-  ['TM', 'MT'],
-  ['HM', 'MO'],
-  ['TR', 'DT'],
-]
-
-export function machineLabel(label: string): string {
-  const match = MACHINE_PREFIXES.find(([en]) => label.startsWith(en))
-  return match ? match[1] + label.slice(match[0].length) : label || '?'
+/** Troca o prefixo da máquina pelo do idioma (TM15 → MT15 em português). */
+export function machineLabel(label: string, prefixes: Record<string, string>): string {
+  const prefix = Object.keys(prefixes).find((en) => label.startsWith(en))
+  return prefix ? prefixes[prefix] + label.slice(prefix.length) : label || '?'
 }
 
 /** `from` é o Pokémon de origem, usado pelo botão "Voltar" da página do golpe. */

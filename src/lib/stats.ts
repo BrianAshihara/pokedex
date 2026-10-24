@@ -54,9 +54,10 @@ export function natureEffect(nature: Nature): NatureEffect {
   return NATURES[nature] ?? [null, null]
 }
 
-export function natureLabel(nature: Nature): string {
+/** `neutral` vem do dicionário ("neutra" / "neutral"); nomes de natureza e atributos ficam em inglês. */
+export function natureLabel(nature: Nature, neutral: string): string {
   const [up, down] = natureEffect(nature)
-  return up ? `${nature} (+${up}, -${down})` : `${nature} (neutra)`
+  return up ? `${nature} (+${up}, -${down})` : `${nature} (${neutral})`
 }
 
 /** Multiplicador em porcentagem inteira, para evitar erro de ponto flutuante. */

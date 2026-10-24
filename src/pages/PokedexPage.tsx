@@ -1,38 +1,27 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { BaseStatsRadar, StatBars } from '../components/charts'
 import { Alert, Brand, Card, Footer, Skeleton } from '../components/common'
 import { SegmentedControl, Toggle } from '../components/controls'
+import { DexSearch } from '../components/DexSearch'
 import { EvolutionCard } from '../components/EvolutionCard'
-import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon, SearchIcon } from '../components/icons'
+import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon } from '../components/icons'
 import { MovesPanel } from '../components/MovesPanel'
 import { PokemonBrowser } from '../components/PokemonBrowser'
 import { AbilitiesCard, Hero, InfoCard, MatchupsCard, type ImageMode } from '../components/pokemon'
 import { usePersistentState } from '../hooks/usePersistentState'
+import { useI18n } from '../i18n/I18nProvider'
 import { accentColor, dexNumber, displayName } from '../lib/format'
 import { getFlavorText, getGenus } from '../lib/pokeapi'
 import { abilitiesQuery, evolutionQuery, matchupsQuery, pokemonQuery, speciesCountQuery, speciesQuery } from '../lib/queries'
 import { baseStats } from '../lib/stats'
 import type { Pokemon, PokemonSprites, Sprites } from '../lib/types'
 
-const IMAGE_MODES: { value: ImageMode; label: string }[] = [
-  { value: 'art', label: 'Arte' },
-  { value: 'pixel', label: 'Pixel' },
-  { value: 'anim', label: 'Animado' },
-]
-
 export function DexHeader() {
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
+  const { t } = useI18n()
   const { data: speciesCount } = useQuery(speciesCountQuery())
-
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    const value = search.trim().toLowerCase()
-    if (value) navigate(`/pokemon/${encodeURIComponent(value)}`)
-    setSearch('')
-  }
 
   const goRandom = () => {
     if (speciesCount) navigate(`/pokemon/${Math.floor(Math.random() * speciesCount) + 1}`)
@@ -41,26 +30,10 @@ export function DexHeader() {
   return (
     <div className="page-header">
       <Brand />
-      <form className="dex-search" onSubmit={onSubmit} role="search">
-        <label htmlFor="search" className="visually-hidden">
-          Buscar Pokémon
-        </label>
-        <SearchIcon className="dex-search-icon" />
-        <input
-          id="search"
-          className="input"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome ou número (ex: pikachu, 25, mr mime)"
-          autoComplete="off"
-        />
-        <button type="submit" className="dex-search-go" aria-label="Buscar" disabled={!search.trim()}>
-          <ChevronRightIcon />
-        </button>
-      </form>
+      <DexSearch />
       <button type="button" className="btn primary block" onClick={goRandom} disabled={!speciesCount}>
         <DiceIcon />
-        Aleatório
+        {t.search.random}
       </button>
     </div>
   )
@@ -69,9 +42,10 @@ export function DexHeader() {
 export function HomePage() {
   const [params] = useSearchParams()
   const legacyRef = params.get('p')
+  const { t } = useI18n()
 
   useEffect(() => {
-    document.title = 'Pokédex'
+    document.title = 'Dexpedition'
   }, [])
 
   // Links antigos usavam /?p=charizard.
@@ -81,7 +55,7 @@ export function HomePage() {
     <>
       <DexHeader />
       <section className="panel" style={{ marginTop: 18 }}>
-        <h2 className="card-title">Todos os Pokémon</h2>
+        <h2 className="card-title">{t.browser.title}</h2>
         <PokemonBrowser />
       </section>
       <Footer />
@@ -94,6 +68,7 @@ export function PokemonPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: pokemon, isPending, isError } = useQuery(pokemonQuery(ref))
+  const { t } = useI18n()
 
   // Normaliza a URL para o nome oficial (ex.: /pokemon/25 → /pokemon/pikachu).
   useEffect(() => {
@@ -104,16 +79,16 @@ export function PokemonPage() {
   }, [pokemon, ref, navigate, queryClient])
 
   useEffect(() => {
-    document.title = pokemon ? `${displayName(pokemon.name)} | Pokédex` : 'Pokédex'
+    document.title = pokemon ? `${displayName(pokemon.name)} | Dexpedition` : 'Dexpedition'
   }, [pokemon])
 
   let content
   if (isPending) {
     content = <LoadingSkeleton />
   } else if (isError) {
-    content = <Alert>Não foi possível acessar a PokeAPI agora. Tente novamente em instantes.</Alert>
+    content = <Alert>{t.common.apiError}</Alert>
   } else if (!pokemon) {
-    content = <Alert>Nenhum Pokémon encontrado para "{ref}". Confira a grafia ou tente pelo número.</Alert>
+    content = <Alert>{t.pokemon.notFound(ref)}</Alert>
   } else {
     content = <PokemonDetails pokemon={pokemon} />
   }
@@ -128,8 +103,9 @@ export function PokemonPage() {
 }
 
 function LoadingSkeleton() {
+  const { t } = useI18n()
   return (
-    <div role="status" aria-label="Carregando">
+    <div role="status" aria-label={t.common.loading}>
       <Skeleton height={46} />
       <div className="dex-grid">
         <Skeleton height={420} />
@@ -166,6 +142,7 @@ function SpeciesNavButton({ id, direction }: { id: number; direction: 'prev' | '
 
 function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [imageMode, setImageMode] = usePersistentState<ImageMode>('pokedex:image-mode', 'art')
   const [shiny, setShiny] = usePersistentState('pokedex:shiny', false)
   const [versionGroup, setVersionGroup] = usePersistentState<string | null>('pokedex:version-group', null)
@@ -182,17 +159,22 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
   const [imageUrl, shownMode] = pickImage(pokemon.sprites, imageMode, shiny)
   const cry = pokemon.cries?.latest || pokemon.cries?.legacy
   const stats = pokemon.stats.length ? baseStats(pokemon) : null
-  const apiSlow = <Alert>A PokeAPI demorou para responder. Algumas informações podem estar incompletas; tente recarregar.</Alert>
+  const apiSlow = <Alert>{t.pokemon.apiSlow}</Alert>
+  const imageModes: { value: ImageMode; label: string }[] = [
+    { value: 'art', label: t.pokemon.imageArt },
+    { value: 'pixel', label: t.pokemon.imagePixel },
+    { value: 'anim', label: t.pokemon.imageAnimated },
+  ]
 
   return (
     <>
-      <nav className="dex-nav" aria-label="Navegação entre Pokémon">
+      <nav className="dex-nav" aria-label={t.pokemon.navLabel}>
         {species && speciesCount ? <SpeciesNavButton id={species.id > 1 ? species.id - 1 : speciesCount} direction="prev" /> : <span />}
         <div>
           {varieties.length > 1 && (
             <select
               className="select"
-              aria-label="Forma"
+              aria-label={t.pokemon.form}
               value={varieties.includes(pokemon.name) ? pokemon.name : varieties[0]}
               onChange={(e) => navigate(`/pokemon/${e.target.value}`)}
             >
@@ -214,7 +196,7 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
           <Hero pokemon={pokemon} species={species} genus={getGenus(species)} imageUrl={imageUrl} imageMode={shownMode} shiny={shiny} />
           <div className="hero-controls">
             <div className="hero-controls-row">
-              <SegmentedControl label="Estilo da imagem" options={IMAGE_MODES} value={imageMode} onChange={setImageMode} />
+              <SegmentedControl label={t.pokemon.imageStyle} options={imageModes} value={imageMode} onChange={setImageMode} />
               <Toggle checked={shiny} onChange={setShiny}>
                 Shiny
               </Toggle>
@@ -222,14 +204,14 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
             {cry ? (
               <div>
                 <audio key={cry} controls preload="none" src={cry} />
-                <p className="caption">Cuidado com o volume.</p>
+                <p className="caption">{t.pokemon.cryWarning}</p>
               </div>
             ) : (
-              <p className="caption">Grito indisponível para este Pokémon.</p>
+              <p className="caption">{t.pokemon.cryUnavailable}</p>
             )}
             <Link className="btn block ghost-link" to={`/laboratorio?p=${pokemon.name}`}>
               <FlaskIcon />
-              Abrir no Laboratório
+              {t.pokemon.openInLab}
             </Link>
           </div>
         </div>
@@ -242,12 +224,12 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
 
         <div>
           {stats ? (
-            <Card title="Atributos base" accent={accent}>
+            <Card title={t.stats.title} accent={accent}>
               <BaseStatsRadar key={pokemon.name} stats={stats} />
               <StatBars key={`bars-${pokemon.name}`} stats={stats} />
             </Card>
           ) : (
-            <Alert kind="info">Dados de atributos não disponíveis.</Alert>
+            <Alert kind="info">{t.stats.unavailable}</Alert>
           )}
         </div>
       </div>

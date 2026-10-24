@@ -1,17 +1,20 @@
 {
   "name": "pokedex",
   "private": true,
-  "version": "6.2.0",
+  "version": "6.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "i18n:extract": "node scripts/i18n-content.mjs extract",
+    "i18n:check": "node scripts/i18n-content.mjs check"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
+    "@tanstack/react-virtual": "3.14.13",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router": "^8.4.0"

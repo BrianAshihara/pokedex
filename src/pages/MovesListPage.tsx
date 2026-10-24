@@ -1,25 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { useDeferredValue, useEffect, useMemo, useRef } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { Alert, Brand, Footer, Spinner, TypeBadge } from '../components/common'
 import { SegmentedControl, TypeFilter } from '../components/controls'
-import { CATEGORY_LABELS, FROM_MOVE_LIST, generationLabel, moveLink, TYPE_COLORS } from '../lib/format'
+import { useSearchField } from '../hooks/useSearchField'
+import { useContentText } from '../i18n/content'
+import { useI18n } from '../i18n/I18nProvider'
+import { FROM_MOVE_LIST, generationLabel, moveLink, TYPE_COLORS } from '../lib/format'
 import { allMovesQuery } from '../lib/queries'
 import type { MoveListItem } from '../lib/types'
 
 type SortKey = 'name' | 'type' | 'category' | 'power' | 'accuracy' | 'pp' | 'generation'
 
-const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
-  { key: 'name', label: 'Golpe' },
-  { key: 'type', label: 'Tipo' },
-  { key: 'category', label: 'Categoria' },
-  { key: 'power', label: 'Poder', numeric: true },
-  { key: 'accuracy', label: 'Precisão', numeric: true },
-  { key: 'pp', label: 'PP', numeric: true },
-  { key: 'generation', label: 'Ger.', numeric: true },
+const COLUMNS: { key: SortKey; numeric?: boolean }[] = [
+  { key: 'name' },
+  { key: 'type' },
+  { key: 'category' },
+  { key: 'power', numeric: true },
+  { key: 'accuracy', numeric: true },
+  { key: 'pp', numeric: true },
+  { key: 'generation', numeric: true },
 ]
 
-const CATEGORY_OPTIONS = [{ value: '', label: 'Todas' }, ...Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label }))]
+const CATEGORIES = ['physical', 'special', 'status']
+
+// Só as linhas visíveis (mais uma margem) são renderizadas: com 800+ golpes, filtrar, ordenar
+// e trocar de idioma deixa de recalcular a tabela inteira.
+const ROW_ESTIMATE = 41
+const ROW_OVERSCAN = 12
 
 const TYPE_ORDER = Object.keys(TYPE_COLORS)
 
@@ -37,13 +46,25 @@ export function MovesListPage() {
   const { search } = useLocation()
   const navigate = useNavigate()
   const { data, isPending, isError } = useQuery(allMovesQuery())
+  const { t } = useI18n()
+  const text = useContentText('moves')
 
   useEffect(() => {
-    document.title = 'Golpes | Pokédex'
-  }, [])
+    document.title = `${t.moves.title} | Dexpedition`
+  }, [t])
 
-  // O campo tem estado próprio: a URL atualiza um instante depois e, lida direto, engoliria letras digitadas rápido.
-  const [query, setQuery] = useState(() => params.get('q') ?? '')
+  const columnLabels: Record<SortKey, string> = {
+    name: t.moves.move,
+    type: t.common.type,
+    category: t.moves.category,
+    power: t.moves.power,
+    accuracy: t.moves.accuracy,
+    pp: t.moves.pp,
+    generation: t.moves.generationShort,
+  }
+  const categoryOptions = [{ value: '', label: t.moves.allCategories }, ...CATEGORIES.map((value) => ({ value, label: t.moves.categories[value] }))]
+
+  const [query, setQuery] = useSearchField(params.get('q') ?? '')
   const type = params.get('tipo') ?? ''
   const category = params.get('cat') ?? ''
   const generation = Number(params.get('ger')) || 0
@@ -101,12 +122,27 @@ export function MovesListPage() {
       .sort((a, b) => compareMoves(a, b, sortKey, desc))
   }, [data, deferredQuery, type, category, generation, sortKey, desc])
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  // O aviso é sobre o React Compiler, que o projeto não usa.
+  // oxlint-disable-next-line react/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => ROW_ESTIMATE,
+    getItemKey: (index) => rows[index].slug,
+    overscan: ROW_OVERSCAN,
+  })
+  const visibleRows = virtualizer.getVirtualItems()
+  // Linhas vazias acima e abaixo ocupam o espaço das que não estão renderizadas, mantendo a rolagem.
+  const padTop = visibleRows[0]?.start ?? 0
+  const padBottom = virtualizer.getTotalSize() - (visibleRows.at(-1)?.end ?? 0)
+
   const open = (slug: string) => navigate(moveLink(slug, undefined, FROM_MOVE_LIST), { state: { list: search } })
   const hasFilters = !!(query || type || category || generation)
 
   let body
-  if (isError) body = <Alert>Não foi possível carregar a lista de golpes. Tente novamente em instantes.</Alert>
-  else if (isPending) body = <Spinner label="Buscando todos os golpes..." />
+  if (isError) body = <Alert>{t.moves.listError}</Alert>
+  else if (isPending) body = <Spinner label={t.moves.listLoading} />
   else
     body = (
       <>
@@ -115,75 +151,93 @@ export function MovesListPage() {
             className="input"
             value={query}
             onChange={(e) => changeQuery(e.target.value)}
-            placeholder="Buscar golpe (ex: Flamethrower)"
-            aria-label="Buscar golpe"
+            placeholder={t.moves.searchPlaceholder}
+            aria-label={t.moves.searchLabel}
             autoFocus
           />
-          <SegmentedControl label="Categoria" options={CATEGORY_OPTIONS} value={category} onChange={(cat) => update({ cat })} />
-          <select className="select" aria-label="Geração" value={generation} onChange={(e) => update({ ger: e.target.value === '0' ? '' : e.target.value })}>
-            <option value={0}>Todas as gerações</option>
+          <SegmentedControl label={t.moves.category} options={categoryOptions} value={category} onChange={(cat) => update({ cat })} />
+          <select className="select" aria-label={t.common.generation} value={generation} onChange={(e) => update({ ger: e.target.value === '0' ? '' : e.target.value })}>
+            <option value={0}>{t.common.allGenerations}</option>
             {generations.map((g) => (
               <option key={g} value={g}>
-                Geração {generationLabel(g)}
+                {t.common.generationOption(generationLabel(g))}
               </option>
             ))}
           </select>
         </div>
         <TypeFilter types={types} selected={[type]} onToggle={(t) => update({ tipo: t === type ? '' : t })} />
         <div className="ml-count">
-          <span>
-            {rows.length} {rows.length === 1 ? 'golpe' : 'golpes'}
-          </span>
+          <span>{t.moves.count(rows.length)}</span>
           {hasFilters && (
             <button type="button" className="link-btn" onClick={clearFilters}>
-              Limpar filtros
+              {t.common.clearFilters}
             </button>
           )}
         </div>
         {rows.length ? (
-          <div className="mv-scroll ml-scroll">
+          <div className="mv-scroll ml-scroll" ref={scrollRef}>
             <table className="mv-table">
+              {/* Larguras fixas: com a virtualização, as colunas não podem depender das linhas visíveis. */}
+              <colgroup>
+                {COLUMNS.map((c) => (
+                  <col key={c.key} className={`ml-col-${c.key}`} />
+                ))}
+                <col className="mv-effect" />
+              </colgroup>
               <thead>
                 <tr>
                   {COLUMNS.map((c) => (
                     <th key={c.key} className={c.numeric ? 'mv-num' : undefined} aria-sort={c.key === sortKey ? (desc ? 'descending' : 'ascending') : undefined}>
                       <button type="button" className="ml-sort" onClick={() => toggleSort(c.key, c.numeric)}>
-                        {c.label}
+                        {columnLabels[c.key]}
                         <span className="ml-arrow" aria-hidden="true">
                           {c.key === sortKey ? (desc ? '▼' : '▲') : ''}
                         </span>
                       </button>
                     </th>
                   ))}
-                  <th className="mv-effect">Efeito</th>
+                  <th className="mv-effect">{t.moves.effect}</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((m) => (
-                  <tr key={m.slug} className="mv-row" onClick={() => open(m.slug)}>
-                    <td className="mv-name">
-                      <Link to={moveLink(m.slug, undefined, FROM_MOVE_LIST)} state={{ list: search }} onClick={(e) => e.stopPropagation()}>
-                        {m.name}
-                      </Link>
-                    </td>
-                    <td>
-                      <TypeBadge type={m.type} small />
-                    </td>
-                    <td>
-                      <span className={`mv-cat ${m.category}`}>{CATEGORY_LABELS[m.category] ?? m.category}</span>
-                    </td>
-                    <td className="mv-num">{m.power || '-'}</td>
-                    <td className="mv-num">{m.accuracy ? `${m.accuracy}%` : '-'}</td>
-                    <td className="mv-num">{m.pp || '-'}</td>
-                    <td className="mv-num">{generationLabel(m.generation)}</td>
-                    <td className="mv-effect">{m.effect}</td>
+                {padTop > 0 && (
+                  <tr aria-hidden="true" className="ml-spacer">
+                    <td colSpan={COLUMNS.length + 1} style={{ height: padTop }} />
                   </tr>
-                ))}
+                )}
+                {visibleRows.map(({ index, key }) => {
+                  const m = rows[index]
+                  return (
+                    <tr key={key} data-index={index} ref={virtualizer.measureElement} className="mv-row" onClick={() => open(m.slug)}>
+                      <td className="mv-name">
+                        <Link to={moveLink(m.slug, undefined, FROM_MOVE_LIST)} state={{ list: search }} onClick={(e) => e.stopPropagation()}>
+                          {m.name}
+                        </Link>
+                      </td>
+                      <td>
+                        <TypeBadge type={m.type} small link="move" />
+                      </td>
+                      <td>
+                        <span className={`mv-cat ${m.category}`}>{t.moves.categories[m.category] ?? m.category}</span>
+                      </td>
+                      <td className="mv-num">{m.power || '-'}</td>
+                      <td className="mv-num">{m.accuracy ? `${m.accuracy}%` : '-'}</td>
+                      <td className="mv-num">{m.pp || '-'}</td>
+                      <td className="mv-num">{generationLabel(m.generation)}</td>
+                      <td className="mv-effect">{text(m.slug, m.effect)}</td>
+                    </tr>
+                  )
+                })}
+                {padBottom > 0 && (
+                  <tr aria-hidden="true" className="ml-spacer">
+                    <td colSpan={COLUMNS.length + 1} style={{ height: padBottom }} />
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="caption">Nenhum golpe encontrado com esses filtros.</p>
+          <p className="caption">{t.moves.empty}</p>
         )}
       </>
     )
@@ -194,9 +248,9 @@ export function MovesListPage() {
         <Brand />
         <div>
           <h1 className="page-title" style={{ margin: 0 }}>
-            Golpes
+            {t.moves.title}
           </h1>
-          <div className="page-sub">Explore todos os golpes e descubra quais Pokémon aprendem cada um.</div>
+          <div className="page-sub">{t.moves.subtitle}</div>
         </div>
       </div>
       <section className="panel">{body}</section>

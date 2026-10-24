@@ -1,3 +1,4 @@
+import type { Dictionary } from '../i18n/pt'
 import type {
   Ability,
   AbilityData,
@@ -217,77 +218,82 @@ function cleanText(text: string): string {
   return text.replaceAll('\f', ' ').replaceAll('\n', ' ').replaceAll('­ ', '').split(/\s+/).filter(Boolean).join(' ')
 }
 
-const PREFERRED_LANGUAGES = ['pt-BR', 'pt', 'en']
-
+// A PokeAPI não tem português: tudo vem em inglês, e a tradução da descrição fica em src/i18n/content.
 export function getFlavorText(species: Species | null): string {
-  const entries = species?.flavor_text_entries ?? []
-  for (const lang of PREFERRED_LANGUAGES) {
-    const texts = entries.filter((e) => e.language.name === lang && e.flavor_text)
-    if (texts.length) return cleanText(texts[texts.length - 1].flavor_text!)
-  }
-  return ''
+  const texts = (species?.flavor_text_entries ?? []).filter((e) => e.language.name === 'en' && e.flavor_text)
+  return texts.length ? cleanText(texts[texts.length - 1].flavor_text!) : ''
 }
 
+/** Categoria (ex.: "Flame Pokémon"), sempre em inglês. */
 export function getGenus(species: Species | null): string {
-  const genera = species?.genera ?? []
-  for (const lang of PREFERRED_LANGUAGES) {
-    const match = genera.find((g) => g.language.name === lang)
-    if (match) return match.genus
-  }
-  return ''
+  return species?.genera.find((g) => g.language.name === 'en')?.genus ?? ''
 }
 
 const titleize = (text: string) => text.replaceAll('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
-const TIME_OF_DAY: Record<string, string> = { day: 'Dia', night: 'Noite', dusk: 'Crepúsculo' }
+type EvolutionTexts = Dictionary['evolution']
 
-function describeLevelUp(detail: EvolutionDetail): string[] {
+function describeLevelUp(detail: EvolutionDetail, evo: EvolutionTexts): string[] {
   const parts: string[] = []
-  if (detail.min_level != null) parts.push(`Nv ${detail.min_level}`)
-  if (detail.time_of_day) parts.push(TIME_OF_DAY[detail.time_of_day] ?? titleize(detail.time_of_day))
-  if (detail.known_move) parts.push(`Mov ${titleize(detail.known_move.name)}`)
-  if (detail.known_move_type) parts.push(`Golpe ${titleize(detail.known_move_type.name)}`)
-  if (detail.held_item) parts.push(`Segurando ${titleize(detail.held_item.name)}`)
-  if (detail.min_happiness != null) parts.push('Amizade')
-  if (detail.min_beauty != null) parts.push('Beleza')
-  if (detail.min_affection != null) parts.push('Afeto')
+  const times: Record<string, string> = { day: evo.day, night: evo.night, dusk: evo.dusk }
+  if (detail.min_level != null) parts.push(evo.level(detail.min_level))
+  if (detail.time_of_day) parts.push(times[detail.time_of_day] ?? titleize(detail.time_of_day))
+  if (detail.known_move) parts.push(evo.knownMove(titleize(detail.known_move.name)))
+  if (detail.known_move_type) parts.push(evo.knownMoveType(titleize(detail.known_move_type.name)))
+  if (detail.held_item) parts.push(evo.holding(titleize(detail.held_item.name)))
+  if (detail.min_happiness != null) parts.push(evo.friendship)
+  if (detail.min_beauty != null) parts.push(evo.beauty)
+  if (detail.min_affection != null) parts.push(evo.affection)
   if (detail.location) parts.push(titleize(detail.location.name))
-  if (detail.needs_overworld_rain) parts.push('Chuva')
-  if (detail.party_species) parts.push(`Equipe ${titleize(detail.party_species.name)}`)
-  if (detail.party_type) parts.push(`Equipe ${titleize(detail.party_type.name)}`)
+  if (detail.needs_overworld_rain) parts.push(evo.rain)
+  if (detail.party_species) parts.push(evo.party(titleize(detail.party_species.name)))
+  if (detail.party_type) parts.push(evo.party(titleize(detail.party_type.name)))
   if (detail.relative_physical_stats === 1) parts.push('Atk > Def')
   else if (detail.relative_physical_stats === -1) parts.push('Atk < Def')
   else if (detail.relative_physical_stats === 0) parts.push('Atk = Def')
-  if (detail.gender === 1) parts.push('Fêmea')
-  else if (detail.gender === 2) parts.push('Macho')
-  if (detail.turn_upside_down) parts.push('De cabeça para baixo')
-  if (!parts.length) parts.push('Subir de nível')
+  if (detail.gender === 1) parts.push(evo.female)
+  else if (detail.gender === 2) parts.push(evo.male)
+  if (detail.turn_upside_down) parts.push(evo.upsideDown)
+  if (!parts.length) parts.push(evo.levelUp)
   return parts
 }
 
-export function summarizeEvolutionMethods(details: (EvolutionDetail | null)[]): string {
-  const summaries: string[] = []
+export interface EvolutionOption {
+  text: string
+  /** Evolução por uso de item: é o método mais reconhecível quando há muitos (ex.: Eevee). */
+  usesItem: boolean
+}
+
+/** Cada forma alternativa de evoluir, sem repetir, no idioma de `evo`. */
+export function evolutionOptions(details: (EvolutionDetail | null)[], evo: EvolutionTexts): EvolutionOption[] {
+  const options = new Map<string, EvolutionOption>()
   for (const detail of details) {
     if (!detail) continue
     const trigger = detail.trigger?.name ?? ''
     let parts: string[] = []
 
     if (trigger === 'level-up') {
-      parts = describeLevelUp(detail)
+      parts = describeLevelUp(detail, evo)
     } else if (trigger === 'use-item') {
-      parts.push(detail.item ? `Usar ${titleize(detail.item.name)}` : 'Usar item')
+      parts.push(detail.item ? evo.useItem(titleize(detail.item.name)) : evo.anyItem)
     } else if (trigger === 'trade') {
-      if (detail.held_item) parts.push(`Troca + ${titleize(detail.held_item.name)}`)
-      else if (detail.trade_species) parts.push(`Troca com ${titleize(detail.trade_species.name)}`)
-      else parts.push('Troca')
+      if (detail.held_item) parts.push(evo.tradeHolding(titleize(detail.held_item.name)))
+      else if (detail.trade_species) parts.push(evo.tradeWith(titleize(detail.trade_species.name)))
+      else parts.push(evo.trade)
     } else if (trigger) {
       parts.push(titleize(trigger))
     }
 
-    const summary = parts.length ? parts.join(' + ') : trigger ? titleize(trigger) : ''
-    if (summary) summaries.push(summary)
+    const text = parts.length ? parts.join(' + ') : trigger ? titleize(trigger) : ''
+    if (text && !options.has(text)) options.set(text, { text, usesItem: trigger === 'use-item' })
   }
-  return [...new Set(summaries)].join(' / ')
+  return [...options.values()]
+}
+
+export function summarizeEvolutionMethods(details: (EvolutionDetail | null)[], evo: EvolutionTexts): string {
+  return evolutionOptions(details, evo)
+    .map((o) => o.text)
+    .join(' / ')
 }
 
 function spriteOf(pokemon: Pokemon | null): string | null {
@@ -304,12 +310,13 @@ export async function getEvolutionTree(speciesName: string): Promise<EvolutionTr
   if (!chainData?.chain) return null
 
   const names: string[] = []
-  const build = (node: ChainLink, method: string | null = null): EvolutionNode => {
+  // Guarda os detalhes crus: o texto do método é montado na tela, no idioma escolhido.
+  const build = (node: ChainLink): EvolutionNode => {
     names.push(node.species.name)
     return {
       name: node.species.name,
-      method,
-      children: node.evolves_to.map((child) => build(child, summarizeEvolutionMethods(child.evolution_details))),
+      details: node.evolution_details ?? [],
+      children: node.evolves_to.map(build),
     }
   }
   const tree = build(chainData.chain)
@@ -562,6 +569,10 @@ export async function getMoveLearners(move: string, versionGroup: string): Promi
   return { machine: (data.move[0]?.machines[0]?.item?.name ?? '').toUpperCase(), byMethod: result }
 }
 
+// Pokémon Champions não tem geração própria na API: o elenco vem dos golpes aprendidos nesse jogo
+// (que já trazem Megas e formas regionais) e da Pokédex dele, que inclui espécies ainda sem golpes cadastrados.
+const CHAMPIONS = '{ versiongroup: { name: { _eq: "champions" } } }'
+
 // Só golpes que algum Pokémon aprende: fora ficam Shadow, Z-Moves e Max Moves.
 const ALL_MOVES_QUERY = `{
   move(where: { pokemonmoves: {} }, order_by: { id: asc }) {
@@ -623,9 +634,10 @@ const ALL_POKEMON_QUERY = `{
     name
     is_default
     pokemon_species_id
-    pokemonspecy { generation_id }
+    pokemonspecy { generation_id pokemondexnumbers(where: { pokedex: { name: { _eq: "champions" } } }) { pokedex_number } }
     pokemontypes(order_by: { slot: asc }) { type { name } }
     pokemonstats(order_by: { stat_id: asc }) { base_stat }
+    champions: pokemonmoves(where: ${CHAMPIONS}, limit: 1) { id }
   }
 }`
 
@@ -635,9 +647,10 @@ interface AllPokemonResponse {
     name: string
     is_default: boolean
     pokemon_species_id: number
-    pokemonspecy: { generation_id: number } | null
+    pokemonspecy: { generation_id: number; pokemondexnumbers: { pokedex_number: number }[] } | null
     pokemontypes: { type: { name: string } }[]
     pokemonstats: { base_stat: number }[]
+    champions: { id: number }[]
   }[]
 }
 
@@ -656,6 +669,8 @@ export async function getAllPokemon(): Promise<PokemonListItem[]> {
         stats,
         total: stats.reduce((sum, value) => sum + value, 0),
         sprite: spriteUrl(p.id),
+        // A Pokédex lista espécies: vale para a forma padrão, não para Gigantamax e afins.
+        champions: p.champions.length > 0 || (p.is_default && !!p.pokemonspecy?.pokemondexnumbers.length),
       }
     })
     .sort((a, b) => a.speciesId - b.speciesId || a.id - b.id)

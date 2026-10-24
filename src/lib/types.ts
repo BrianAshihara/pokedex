@@ -194,7 +194,8 @@ export interface LearnedMove extends Move {
 
 export interface EvolutionNode {
   name: string
-  method: string | null
+  /** Como se chega a este estágio a partir do anterior (vazio no primeiro). */
+  details: (EvolutionDetail | null)[]
   children: EvolutionNode[]
 }
 
@@ -219,4 +220,6 @@ export interface PokemonListItem {
   stats: number[]
   total: number
   sprite: string
+  /** Disponível em Pokémon Champions. */
+  champions: boolean
 }

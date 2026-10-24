@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useI18n } from '../i18n/I18nProvider'
 import { COMPARE_COLORS, hexToRgba, statColor } from '../lib/format'
 import { STATS, statRangeLv100, sumStats, type StatName, type StatValues } from '../lib/stats'
 
@@ -35,13 +36,14 @@ const polygon = (radii: number[], ox = 0, oy = 0) =>
 function Radar({ series, cap, labels }: { series: Series[]; cap: number; labels: AxisLabel[] }) {
   // IDs únicos para os gradientes, caso haja mais de um hexágono na página.
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const { t } = useI18n()
   const plateId = `hexPlate${uid}`
   const fillId = `hexFill${uid}`
   const glowId = `hexGlow${uid}`
 
   return (
     <div className="stats-hex">
-      <svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gráfico hexagonal de atributos">
+      <svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label={t.stats.radarLabel}>
         <defs>
           <linearGradient id={plateId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#2a3145" />
@@ -146,6 +148,7 @@ export function CompareRadar({ series, cap }: { series: StatValues[]; cap: numbe
 }
 
 export function StatBars({ stats, cap = 200 }: { stats: StatValues; cap?: number }) {
+  const { t } = useI18n()
   const total = sumStats(stats)
   return (
     <>
@@ -155,8 +158,8 @@ export function StatBars({ stats, cap = 200 }: { stats: StatValues; cap?: number
             <th />
             <th />
             <th />
-            <th>Mín</th>
-            <th>Máx</th>
+            <th>{t.stats.min}</th>
+            <th>{t.stats.max}</th>
           </tr>
         </thead>
         <tbody>
@@ -193,7 +196,7 @@ export function StatBars({ stats, cap = 200 }: { stats: StatValues; cap?: number
           </tr>
         </tbody>
       </table>
-      <div className="stat-note">Mín / Máx no nível 100 (natureza, IVs e EVs)</div>
+      <div className="stat-note">{t.stats.rangeNote}</div>
     </>
   )
 }

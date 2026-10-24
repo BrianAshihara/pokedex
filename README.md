@@ -1,4 +1,4 @@
-<h1 align="center">Pokédex</h1>
+<h1 align="center">Dexpedition</h1>
 
 <p align="center">
   Pokédex web interativa construída com React, TypeScript e Vite, com dados em tempo real da <a href="https://pokeapi.co/">PokeAPI</a>.
@@ -12,13 +12,14 @@
 </p>
 
 <p align="center">
-  <img src="assets/pokedex.png" alt="Tela da Pokédex mostrando o Charizard: card com arte oficial, dados da Pokédex, habilidades, dano recebido e hexágono de atributos base" width="90%">
+  <img src="assets/pokedex.png" alt="Tela do Dexpedition mostrando o Charizard: menu do topo com seletor de idioma, busca, card com arte oficial, dados da Pokédex com descrição em português, habilidades, dano recebido, hexágono de atributos base e cadeia de evolução" width="90%">
 </p>
 
 ## Sumário
 
 - [Visão geral](#visão-geral)
 - [Funcionalidades](#funcionalidades)
+- [Idiomas](#idiomas)
 - [Stack](#stack)
 - [Arquitetura](#arquitetura)
 - [Executando localmente](#executando-localmente)
@@ -37,10 +38,10 @@ A aplicação roda inteiramente no navegador: não há backend, e todos os dados
 
 ### Busca e navegação
 
-- Busca por nome ou número da Pokédex nacional, tolerante a espaços, pontuação e acentos (`mr mime`, `deoxys`, `25`, `flabébé`).
+- Busca por nome ou número da Pokédex nacional, tolerante a espaços, pontuação e acentos (`mr mime`, `deoxys`, `25`, `flabébé`), com sugestões enquanto você digita: sprite, número e tipos de cada Pokémon, navegação pelo teclado e tolerância a pequenos erros (`chrzd` → Charizard).
 - Navegação sequencial pela numeração nacional, exibindo o nome do Pokémon anterior e do próximo.
 - Sorteio de um Pokémon aleatório entre todas as espécies disponíveis na API.
-- Lista de todos os Pokémon na página inicial, em grade com sprite, número e tipos. Filtra por nome, por até dois tipos (ex.: Fire + Flying) e por geração, e ordena por número, nome, total ou um atributo específico (ex.: os mais rápidos). Formas alternativas aparecem com um clique.
+- Lista de todos os Pokémon na página inicial, em grade com sprite, número e tipos. Filtra por nome, por até dois tipos (ex.: Fire + Flying) e por geração (ou só os disponíveis em Pokémon Champions), e ordena por número, nome, total ou um atributo específico (ex.: os mais rápidos). Formas alternativas aparecem com um clique.
 - URLs próprias para cada Pokémon (`/pokemon/charizard`), permitindo compartilhar links e usar o histórico do navegador. Links antigos no formato `?p=charizard` continuam funcionando.
 
 ### Informações exibidas
@@ -79,6 +80,14 @@ Página separada (`/laboratorio`), acessível pelo menu no topo ou pelo botão "
   <img src="assets/evolucao.png" alt="Cadeia de evolução ramificada do Eevee com todas as oito evoluções e seus métodos" width="90%">
 </p>
 
+## Idiomas
+
+A interface está em português (PT-BR) e inglês (EN-US), com um seletor discreto no topo. O idioma inicial segue o do navegador (português abre em PT, qualquer outro em EN), e a escolha fica salva.
+
+- **Ficam em inglês nos dois idiomas**: nomes de Pokémon, tipos, golpes, habilidades, itens, jogos, atributos, naturezas e categorias (ex.: Flame Pokémon). Medidas sempre no SI.
+- **Traduzidos**: toda a interface e as descrições da Pokédex, dos golpes e das habilidades. Como a PokeAPI não tem textos em português, esses ~2.200 textos foram traduzidos e ficam em `src/i18n/content/pt/`. Medidas imperiais das descrições foram convertidas para o SI.
+- **Sem custo no modo EN**: as traduções ficam em arquivos separados, baixados só no modo PT. Se a API ganhar um texto novo, ele aparece em inglês até ser traduzido.
+
 ## Stack
 
 | Camada | Tecnologia |
@@ -104,6 +113,7 @@ O código é dividido em camadas com responsabilidades separadas:
 - **`src/components/`**: componentes visuais (cards, hexágono de atributos, árvore de evolução, tabela de golpes, lista de Pokémon) e controles reutilizáveis (select pesquisável, abas, slider, toggle, filtro de tipos).
 - **`src/pages/`**: uma página por arquivo (`PokedexPage.tsx`, `MovesListPage.tsx`, `MovePage.tsx` e `LabPage.tsx`), responsáveis pelo layout e pelo estado de cada tela.
 - **`src/state/`**: estado do Laboratório, compartilhado entre as páginas para não se perder ao navegar.
+- **`src/i18n/`**: dicionários da interface (`pt.ts` é a referência, e `en.ts` é tipado a partir dele, então faltar um texto quebra o build) e as traduções das descrições da PokeAPI.
 
 Decisões de desempenho:
 
@@ -136,6 +146,8 @@ Outros comandos:
 | `npm run preview` | Serve localmente a versão gerada pelo build |
 | `npm test` | Executa os testes unitários |
 | `npm run lint` | Executa o lint |
+| `npm run i18n:check` | Compara a PokeAPI com as traduções e lista descrições novas, alteradas ou sem uso |
+| `npm run i18n:extract` | Atualiza `scripts/i18n-source.en.json`, o inglês de onde cada tradução saiu |
 
 ## Deploy
 
@@ -153,11 +165,13 @@ pokedex/
 ├── assets/                    # Imagens usadas neste README
 ├── public/
 │   └── favicon.svg
+├── scripts/                   # Extração e checagem das traduções da PokeAPI
 ├── src/
 │   ├── components/            # Componentes visuais e controles
 │   ├── hooks/                 # Hooks reutilizáveis
+│   ├── i18n/                  # Dicionários PT/EN e traduções das descrições
 │   ├── lib/                   # PokeAPI, fórmulas, formatação, tipos e testes
-│   ├── pages/                 # Pokédex, Golpes e Laboratório
+│   ├── pages/                 # Pokémon, Golpes e Laboratório
 │   ├── state/                 # Estado do Laboratório
 │   ├── styles/
 │   │   └── global.css         # Tema e estilos

@@ -1,6 +1,9 @@
-import { useEffect } from 'react'
-import { NavLink, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router'
-import { BookIcon, FlaskIcon, SwordIcon } from './components/icons'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, type CSSProperties } from 'react'
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigationType, useSearchParams } from 'react-router'
+import { BookIcon, FlaskIcon, GithubIcon, GlobeIcon, LinkedinIcon, SwordIcon } from './components/icons'
+import { prefetchContent, useContentPrefetch } from './i18n/content'
+import { useI18n, type Language } from './i18n/I18nProvider'
 import { FROM_MOVE_LIST } from './lib/format'
 import { LabPage } from './pages/LabPage'
 import { MovePage } from './pages/MovePage'
@@ -9,45 +12,110 @@ import { HomePage, PokemonPage } from './pages/PokedexPage'
 import { LabStateProvider } from './state/LabState'
 
 function TopNav() {
+  const { t } = useI18n()
   const { pathname } = useLocation()
   const [params] = useSearchParams()
-  // A página de um golpe pertence à aba de onde veio: Pokédex se veio de um Pokémon, Golpes nos demais casos.
+  // A página de um golpe pertence à aba de onde veio: Pokémon se veio de um Pokémon, Golpes nos demais casos.
   const onMove = pathname.startsWith('/golpe/')
   const fromPokemon = onMove && !!params.get('de') && params.get('de') !== FROM_MOVE_LIST
   const onDex = pathname === '/' || pathname.startsWith('/pokemon') || fromPokemon
   const onMoves = pathname === '/golpes' || (onMove && !fromPokemon)
   return (
-    <nav className="topnav" aria-label="Páginas">
+    <nav className="topnav" aria-label={t.nav.label}>
       <NavLink to="/" className={onDex ? 'active' : undefined}>
         <BookIcon />
-        Pokédex
+        {t.nav.pokemon}
       </NavLink>
       <NavLink to="/golpes" className={onMoves ? 'active' : undefined}>
         <SwordIcon />
-        Golpes
+        {t.nav.moves}
       </NavLink>
       <NavLink to="/laboratorio" className={({ isActive }) => (isActive ? 'active' : undefined)}>
         <FlaskIcon />
-        Laboratório
+        {t.nav.lab}
       </NavLink>
     </nav>
   )
 }
 
+const LANGUAGES: { value: Language; label: string; name: string; htmlLang: string }[] = [
+  { value: 'pt', label: 'PT', name: 'Português', htmlLang: 'pt-BR' },
+  { value: 'en', label: 'EN', name: 'English', htmlLang: 'en' },
+]
+
+// Espera as traduções no máximo isso antes de trocar; depois troca assim mesmo (o texto chega em seguida).
+const PREFETCH_WAIT = 400
+
+function LanguageSwitch() {
+  const { lang, setLang, t } = useI18n()
+  const queryClient = useQueryClient()
+  // Último idioma clicado: se o usuário trocar de ideia durante a espera do PT, vale o clique mais recente.
+  const latest = useRef(lang)
+  // Ao passar o mouse ou focar, já baixa as traduções: a troca para PT chega com as descrições prontas.
+  const warmUp = () => void prefetchContent(queryClient)
+
+  const choose = async (next: Language) => {
+    latest.current = next
+    if (next === lang) return
+    if (next === 'pt') await Promise.race([prefetchContent(queryClient), new Promise((resolve) => setTimeout(resolve, PREFETCH_WAIT))])
+    if (latest.current === next) setLang(next)
+  }
+
+  const active = LANGUAGES.findIndex((l) => l.value === lang)
+  return (
+    <div className="lang-switch" role="group" aria-label={t.nav.language} onPointerEnter={warmUp} onFocus={warmUp} style={{ '--active': active } as CSSProperties}>
+      <span className="lang-thumb" aria-hidden="true" />
+      {LANGUAGES.map((l) => (
+        <button key={l.value} type="button" lang={l.htmlLang} aria-pressed={l.value === lang} title={l.name} onClick={() => void choose(l.value)}>
+          {l.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function SocialLinks() {
+  const { t } = useI18n()
+  const links = [
+    { href: 'https://github.com/BrianAshihara', label: 'GitHub', Icon: GithubIcon },
+    { href: 'https://www.linkedin.com/in/brianashihara', label: 'LinkedIn', Icon: LinkedinIcon },
+    { href: 'https://portfolio-brian-ashihara.vercel.app', label: t.nav.portfolio, Icon: GlobeIcon },
+  ]
+  return (
+    <div className="social">
+      {links.map(({ href, label, Icon }) => (
+        <a key={href} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label}>
+          <Icon />
+        </a>
+      ))}
+    </div>
+  )
+}
+
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const { pathname, key } = useLocation()
+  const navigationType = useNavigationType()
+  // Links que só trocam os filtros (ex.: clicar num tipo dentro da lista) também sobem; digitar nos filtros usa replace e não.
+  const pushKey = navigationType === 'PUSH' ? key : null
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [pathname])
+  }, [pathname, pushKey])
   return null
 }
 
 export function App() {
+  useContentPrefetch()
   return (
     <LabStateProvider>
       <ScrollToTop />
       <div className="container">
-        <TopNav />
+        <header className="topbar">
+          <TopNav />
+          <div className="topbar-end">
+            <LanguageSwitch />
+            <SocialLinks />
+          </div>
+        </header>
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />

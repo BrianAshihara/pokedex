@@ -1,4 +1,6 @@
 import { useState, type CSSProperties } from 'react'
+import { useContentText } from '../i18n/content'
+import { useI18n } from '../i18n/I18nProvider'
 import { decimal, dexNumber, displayName, hexToRgba, pokemonArt, typeColor, typeNames } from '../lib/format'
 import { applyAbilityToMatchups, SE_REDUCING_ABILITIES } from '../lib/pokeapi'
 import type { Ability, Matchups, Pokemon, Species } from '../lib/types'
@@ -22,11 +24,12 @@ export function Hero({ pokemon, species, genus, imageUrl, imageMode, shiny }: He
   const c1 = typeColor(types[0])
   const c2 = types[1] ? typeColor(types[1]) : c1
   const name = displayName(pokemon.name)
+  const { t } = useI18n()
 
   let category: { cls: string; label: string } | null = null
-  if (species?.is_legendary) category = { cls: 'tag legendary', label: 'Lendário' }
-  else if (species?.is_mythical) category = { cls: 'tag mythical', label: 'Mítico' }
-  else if (species?.is_baby) category = { cls: 'tag', label: 'Bebê' }
+  if (species?.is_legendary) category = { cls: 'tag legendary', label: t.pokemon.legendary }
+  else if (species?.is_mythical) category = { cls: 'tag mythical', label: t.pokemon.mythical }
+  else if (species?.is_baby) category = { cls: 'tag', label: t.pokemon.baby }
 
   const style = { '--tint1': hexToRgba(c1, 0.55), '--tint2': hexToRgba(c2, 0.22), '--glow': hexToRgba(c1, 0.55) } as CSSProperties
 
@@ -44,14 +47,14 @@ export function Hero({ pokemon, species, genus, imageUrl, imageMode, shiny }: He
         {imageUrl ? (
           <img key={imageUrl} className={imageMode === 'art' ? undefined : imageMode} src={imageUrl} alt={name} />
         ) : (
-          <span className="no-art">Imagem indisponível</span>
+          <span className="no-art">{t.pokemon.imageUnavailable}</span>
         )}
       </div>
       <h1 className="hero-name">{name}</h1>
       <div className="hero-genus">{genus}</div>
       <div className="types">
         {types.map((t) => (
-          <TypeBadge key={t} type={t} />
+          <TypeBadge key={t} type={t} link="pokemon" />
         ))}
       </div>
     </div>
@@ -59,12 +62,14 @@ export function Hero({ pokemon, species, genus, imageUrl, imageMode, shiny }: He
 }
 
 function Gender({ rate }: { rate: number | undefined }) {
+  const { t } = useI18n()
   if (rate == null) return <>?</>
-  if (rate < 0) return <>Sem gênero</>
+  if (rate < 0) return <>{t.info.genderless}</>
   const female = (rate / 8) * 100
+  const sep = t.decimalSeparator
   return (
     <>
-      <span className="m">♂ {decimal(100 - female, 1, true)}%</span> <span className="f">♀ {decimal(female, 1, true)}%</span>
+      <span className="m">♂ {decimal(100 - female, sep, 1, true)}%</span> <span className="f">♀ {decimal(female, sep, 1, true)}%</span>
     </>
   )
 }
@@ -75,16 +80,20 @@ function generationLabel(name: string | undefined): string {
 }
 
 export function InfoCard({ pokemon, species, flavor, accent }: { pokemon: Pokemon; species: Species | null; flavor: string; accent: string }) {
+  const { t } = useI18n()
+  const text = useContentText('pokedex')
+  const description = species ? text(species.name, flavor) : flavor
+  // Sempre no SI (m, kg), nos dois idiomas; só o separador decimal muda.
   const tiles = [
-    { k: 'Altura', v: `${decimal(pokemon.height / 10)} m` },
-    { k: 'Peso', v: `${decimal(pokemon.weight / 10)} kg` },
-    { k: 'Gênero', v: <Gender rate={species?.gender_rate} />, small: true },
-    { k: 'Captura', v: species?.capture_rate ?? '?' },
-    { k: 'Exp. base', v: pokemon.base_experience || '?' },
-    { k: 'Geração', v: generationLabel(species?.generation?.name) },
+    { k: t.info.height, v: `${decimal(pokemon.height / 10, t.decimalSeparator)} m` },
+    { k: t.info.weight, v: `${decimal(pokemon.weight / 10, t.decimalSeparator)} kg` },
+    { k: t.info.gender, v: <Gender rate={species?.gender_rate} />, small: true },
+    { k: t.info.catchRate, v: species?.capture_rate ?? '?' },
+    { k: t.info.baseExp, v: pokemon.base_experience || '?' },
+    { k: t.info.generation, v: generationLabel(species?.generation?.name) },
   ]
   return (
-    <Card title="Dados da Pokédex" accent={accent}>
+    <Card title={t.info.title} accent={accent}>
       <div className="info-grid">
         {tiles.map(({ k, v, small }) => (
           <div key={k} className="tile">
@@ -93,22 +102,24 @@ export function InfoCard({ pokemon, species, flavor, accent }: { pokemon: Pokemo
           </div>
         ))}
       </div>
-      {flavor && <div className="flavor">{flavor}</div>}
+      {description && <div className="flavor">{description}</div>}
     </Card>
   )
 }
 
 export function AbilitiesCard({ abilities, accent }: { abilities: Ability[]; accent: string }) {
+  const { t } = useI18n()
+  const text = useContentText('abilities')
   return (
-    <Card title="Habilidades" accent={accent}>
-      {abilities.length === 0 && <span className="muted">Nenhuma habilidade registrada.</span>}
+    <Card title={t.abilities.title} accent={accent}>
+      {abilities.length === 0 && <span className="muted">{t.abilities.none}</span>}
       {abilities.map((a) => (
         <div key={a.name + a.hidden} className="ability-row">
           <span className={a.hidden ? 'ability-pill hidden' : 'ability-pill'}>
             {a.name}
-            {a.hidden && <small>oculta</small>}
+            {a.hidden && <small>{t.abilities.hidden}</small>}
           </span>
-          {a.description && <div className="ability-desc">{a.description}</div>}
+          {a.description && <div className="ability-desc">{text(a.slug, a.description)}</div>}
         </div>
       ))}
     </Card>
@@ -129,6 +140,7 @@ const NO_ABILITY = 'none'
 
 /** Remonte com `key` ao trocar de Pokémon para resetar a habilidade escolhida. */
 export function MatchupsCard({ matchups: baseMatchups, abilities, accent }: { matchups: Matchups; abilities: Ability[]; accent: string }) {
+  const { t } = useI18n()
   const relevant = abilities.filter((a, i, all) => SE_REDUCING_ABILITIES.has(a.slug) && all.findIndex((b) => b.slug === a.slug) === i)
   // Se o Pokémon só tem a habilidade (ex: Mega Aggron, Necrozma), aplica direto, sem seletor.
   const guaranteed = abilities.length > 0 && abilities.every((a) => SE_REDUCING_ABILITIES.has(a.slug))
@@ -138,24 +150,24 @@ export function MatchupsCard({ matchups: baseMatchups, abilities, accent }: { ma
   const matchups = applyAbilityToMatchups(baseMatchups, selected === NO_ABILITY ? null : selected)
   const rows = MATCHUP_ROWS.filter(([mult]) => matchups.get(mult)?.length)
   return (
-    <Card title="Dano recebido" accent={accent}>
+    <Card title={t.matchups.title} accent={accent}>
       {relevant.length > 0 && !guaranteed && (
         <div className="mu-ability">
           <SegmentedControl
-            label="Habilidade considerada"
+            label={t.matchups.abilityConsidered}
             value={selected}
             onChange={setChosen}
-            options={[{ value: NO_ABILITY, label: 'Outra habilidade' }, ...relevant.map((a) => ({ value: a.slug, label: a.name }))]}
+            options={[{ value: NO_ABILITY, label: t.matchups.otherAbility }, ...relevant.map((a) => ({ value: a.slug, label: a.name }))]}
           />
         </div>
       )}
-      {rows.length === 0 && <span className="muted">Sem dados de tipo.</span>}
+      {rows.length === 0 && <span className="muted">{t.matchups.noData}</span>}
       {rows.map(([mult, cls, label]) => (
         <div key={cls} className="mu-row">
           <span className={`mu-mult ${cls}`}>{label}</span>
           <div className="mu-types">
             {[...matchups.get(mult)!].sort().map((t) => (
-              <TypeBadge key={t} type={t} small />
+              <TypeBadge key={t} type={t} small link="pokemon" />
             ))}
           </div>
         </div>
@@ -175,7 +187,7 @@ export function MiniPokemon({ pokemon, speciesId, color, subtitle }: { pokemon: 
         <div className="mini-name">{displayName(pokemon.name)}</div>
         <div className="types">
           {types.map((t) => (
-            <TypeBadge key={t} type={t} small />
+            <TypeBadge key={t} type={t} small link="pokemon" />
           ))}
         </div>
         {subtitle && <div className="mini-sub">{subtitle}</div>}

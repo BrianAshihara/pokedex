@@ -6,6 +6,7 @@ import { Alert, Brand, Footer, Skeleton, Spinner } from '../components/common'
 import { Combobox, NumberInput, SegmentedControl, Slider, Tabs, Toast } from '../components/controls'
 import { BlockIcon } from '../components/icons'
 import { MiniPokemon } from '../components/pokemon'
+import { useI18n } from '../i18n/I18nProvider'
 import { COMPARE_COLORS, displayName } from '../lib/format'
 import { pokemonNamesQuery, pokemonQuery, speciesQuery } from '../lib/queries'
 import {
@@ -27,22 +28,14 @@ import {
 import type { Pokemon } from '../lib/types'
 import { useLabState, type CompareMode, type LabState, type LabTab } from '../state/LabState'
 
-const TABS: { value: LabTab; label: string }[] = [
-  { value: 'calc', label: 'Calculadora de atributos' },
-  { value: 'compare', label: 'Comparador' },
-]
+type PresetName = 'presetPhysical' | 'presetSpecial' | 'presetPhysicalWall' | 'presetSpecialWall'
 
-const COMPARE_MODES: { value: CompareMode; label: string }[] = [
-  { value: 'base', label: 'Atributos base' },
-  { value: '50', label: 'Nível 50' },
-  { value: '100', label: 'Nível 100' },
-]
-
-const EV_PRESETS: { label: string; evs: Partial<StatValues> }[] = [
-  { label: 'Atacante físico (252 Atk / 252 Spe / 4 HP)', evs: { Attack: 252, Speed: 252, HP: 4 } },
-  { label: 'Atacante especial (252 SpA / 252 Spe / 4 HP)', evs: { 'Sp. Atk': 252, Speed: 252, HP: 4 } },
-  { label: 'Tanque físico (252 HP / 252 Def / 4 SpD)', evs: { HP: 252, Defense: 252, 'Sp. Def': 4 } },
-  { label: 'Tanque especial (252 HP / 252 SpD / 4 Def)', evs: { HP: 252, 'Sp. Def': 252, Defense: 4 } },
+// O nome vem do dicionário; a distribuição usa as siglas dos atributos, iguais nos dois idiomas.
+const EV_PRESETS: { name: PresetName; spread: string; evs: Partial<StatValues> }[] = [
+  { name: 'presetPhysical', spread: '252 Atk / 252 Spe / 4 HP', evs: { Attack: 252, Speed: 252, HP: 4 } },
+  { name: 'presetSpecial', spread: '252 SpA / 252 Spe / 4 HP', evs: { 'Sp. Atk': 252, Speed: 252, HP: 4 } },
+  { name: 'presetPhysicalWall', spread: '252 HP / 252 Def / 4 SpD', evs: { HP: 252, Defense: 252, 'Sp. Def': 4 } },
+  { name: 'presetSpecialWall', spread: '252 HP / 252 SpD / 4 Def', evs: { HP: 252, 'Sp. Def': 252, Defense: 4 } },
 ]
 
 /** Pokémon + número da Pokédex nacional (o id do /pokemon é diferente para formas alternativas). */
@@ -58,10 +51,16 @@ export function LabPage() {
   const linkedRef = params.get('p')
   const { data: names = [] } = useQuery(pokemonNamesQuery())
   const { data: linkedPokemon } = useQuery({ ...pokemonQuery(linkedRef ?? ''), enabled: !!linkedRef })
+  const { t } = useI18n()
 
   useEffect(() => {
-    document.title = 'Laboratório | Pokédex'
-  }, [])
+    document.title = `${t.lab.title} | Dexpedition`
+  }, [t])
+
+  const tabs: { value: LabTab; label: string }[] = [
+    { value: 'calc', label: t.lab.calculator },
+    { value: 'compare', label: t.lab.comparator },
+  ]
 
   // "Abrir no Laboratório" chega com ?p=nome: usa esse Pokémon na calculadora e no primeiro slot do comparador.
   useEffect(() => {
@@ -82,13 +81,13 @@ export function LabPage() {
         <Brand />
         <div>
           <h1 className="page-title" style={{ margin: 0 }}>
-            Laboratório
+            {t.lab.title}
           </h1>
-          <div className="page-sub">Calcule os atributos reais do seu Pokémon e compare Pokémon lado a lado.</div>
+          <div className="page-sub">{t.lab.subtitle}</div>
         </div>
       </div>
 
-      <Tabs label="Ferramentas do laboratório" tabs={TABS} active={state.tab} onChange={(tab) => setState((s) => ({ ...s, tab }))} />
+      <Tabs label={t.lab.toolsLabel} tabs={tabs} active={state.tab} onChange={(tab) => setState((s) => ({ ...s, tab }))} />
 
       {state.tab === 'calc' ? <Calculator names={names} onPokemonChange={setCalcPokemon} /> : <Comparator names={names} />}
 
@@ -104,6 +103,7 @@ function Calculator({ names, onPokemonChange }: { names: string[]; onPokemonChan
   const [toast, setToast] = useState<string | null>(null)
   const closeToast = useCallback(() => setToast(null), [])
   const [natureUp, natureDown] = natureEffect(nature)
+  const { t } = useI18n()
 
   const setIvs = (fn: (s: StatName) => number) => setState((s) => ({ ...s, ivs: mapStats(fn) }))
   const setEvs = (fn: (s: StatName) => number) => setState((s) => ({ ...s, evs: mapStats(fn) }))
@@ -111,7 +111,7 @@ function Calculator({ names, onPokemonChange }: { names: string[]; onPokemonChan
   const changeEv = (stat: StatName, value: number) => {
     const others = sumStats(evs) - evs[stat]
     const available = Math.floor((MAX_TOTAL_EV - others) / 2) * 2
-    if (value > available) setToast(`Limite de ${MAX_TOTAL_EV} EVs atingido.`)
+    if (value > available) setToast(t.lab.evLimit(MAX_TOTAL_EV))
     setEvs((s) => (s === stat ? Math.min(value, available) : evs[s]))
   }
 
@@ -119,32 +119,32 @@ function Calculator({ names, onPokemonChange }: { names: string[]; onPokemonChan
     <>
       <div className="lab-calc-top">
         <div className="field">
-          <span className="field-label">Pokémon</span>
-          <Combobox label="Pokémon" options={names} value={calcPokemon} onChange={onPokemonChange} getLabel={displayName} />
+          <span className="field-label">{t.lab.pokemon}</span>
+          <Combobox label={t.lab.pokemon} options={names} value={calcPokemon} onChange={onPokemonChange} getLabel={displayName} />
         </div>
         <label className="field">
-          <span className="field-label">Nível</span>
-          <NumberInput label="Nível" value={level} min={1} max={100} onChange={(value) => setState((s) => ({ ...s, level: value }))} />
+          <span className="field-label">{t.lab.level}</span>
+          <NumberInput label={t.lab.level} value={level} min={1} max={100} onChange={(value) => setState((s) => ({ ...s, level: value }))} />
         </label>
         <label className="field">
-          <span className="field-label">Natureza</span>
+          <span className="field-label">{t.lab.nature}</span>
           <select className="select" value={nature} onChange={(e) => setState((s) => ({ ...s, nature: e.target.value as Nature }))}>
             {NATURE_NAMES.map((n) => (
               <option key={n} value={n}>
-                {natureLabel(n)}
+                {natureLabel(n, t.lab.neutral)}
               </option>
             ))}
           </select>
         </label>
       </div>
 
-      {isError && <Alert>Não foi possível carregar este Pokémon agora. Tente novamente em instantes.</Alert>}
-      {isPending && <Spinner label="Carregando Pokémon..." />}
+      {isError && <Alert>{t.lab.loadError}</Alert>}
+      {isPending && <Spinner label={t.lab.loading} />}
 
       {pokemon && (
         <div className="lab-calc-body">
           <section className="panel">
-            <h2 className="card-title">IVs e EVs</h2>
+            <h2 className="card-title">{t.lab.ivsEvs}</h2>
             <div className="button-row">
               <button type="button" className="btn" onClick={() => setIvs(() => MAX_IV)}>
                 IVs 31
@@ -153,12 +153,12 @@ function Calculator({ names, onPokemonChange }: { names: string[]; onPokemonChan
                 IVs 0
               </button>
               <button type="button" className="btn" onClick={() => setEvs(() => 0)}>
-                Zerar EVs
+                {t.lab.resetEvs}
               </button>
             </div>
             <select
               className="select"
-              aria-label="Distribuição rápida de EVs"
+              aria-label={t.lab.quickEvs}
               value=""
               onChange={(e) => {
                 const preset = EV_PRESETS[Number(e.target.value)]
@@ -166,11 +166,11 @@ function Calculator({ names, onPokemonChange }: { names: string[]; onPokemonChan
               }}
             >
               <option value="" disabled>
-                Distribuição rápida de EVs
+                {t.lab.quickEvs}
               </option>
               {EV_PRESETS.map((p, i) => (
-                <option key={p.label} value={i}>
-                  {p.label}
+                <option key={p.name} value={i}>
+                  {t.lab[p.name]} ({p.spread})
                 </option>
               ))}
             </select>
@@ -186,7 +186,7 @@ function Calculator({ names, onPokemonChange }: { names: string[]; onPokemonChan
             />
 
             <div className="ev-meter">
-              <span>EVs usados</span>
+              <span>{t.lab.evsUsed}</span>
               <div className="bar-track">
                 <div
                   className="bar-fill static"
@@ -226,12 +226,13 @@ function NatureTag({ stat, natureUp, natureDown }: { stat: StatName; natureUp: S
 
 function CalcGrid({ pokemon, ivs, evs, natureUp, natureDown, onIvChange, onEvChange }: CalcGridProps) {
   const base = baseStats(pokemon)
+  const { t } = useI18n()
   return (
     <div className="calc-grid">
-      <div className="calc-head">Atributo</div>
-      <div className="calc-head">Base</div>
-      <div className="calc-head">IV (0 a 31)</div>
-      <div className="calc-head">EV (0 a 252)</div>
+      <div className="calc-head">{t.lab.stat}</div>
+      <div className="calc-head">{t.lab.base}</div>
+      <div className="calc-head">{t.lab.ivRange(MAX_IV)}</div>
+      <div className="calc-head">{t.lab.evRange(MAX_EV)}</div>
       {STATS.map((s) => (
         <div key={s} style={{ display: 'contents' }}>
           <div className="calc-stat">
@@ -252,20 +253,21 @@ function CalcResult({ pokemon, speciesId }: { pokemon: Pokemon; speciesId?: numb
   const [natureUp, natureDown] = natureEffect(nature)
   const base = baseStats(pokemon)
   const final = calcAll(base, ivs, evs, level, nature)
+  const { t } = useI18n()
 
   return (
     <section className="card">
-      <h2 className="card-title">Atributos no nível {level}</h2>
-      <MiniPokemon pokemon={pokemon} speciesId={speciesId} subtitle={natureLabel(nature)} />
+      <h2 className="card-title">{t.lab.statsAtLevel(level)}</h2>
+      <MiniPokemon pokemon={pokemon} speciesId={speciesId} subtitle={natureLabel(nature, t.lab.neutral)} />
       <FinalStatsRadar key={pokemon.name} stats={final} natureUp={natureUp} natureDown={natureDown} />
       <table className="lab-table">
         <thead>
           <tr>
-            <th>Atributo</th>
-            <th>Base</th>
+            <th>{t.lab.stat}</th>
+            <th>{t.lab.base}</th>
             <th>IV</th>
             <th>EV</th>
-            <th>Final</th>
+            <th>{t.lab.final}</th>
           </tr>
         </thead>
         <tbody>
@@ -295,6 +297,12 @@ function Comparator({ names }: { names: string[] }) {
   const [state, setState] = useLabState()
   const { compareMode: mode, compare } = state
   const optionalNames = [''].concat(names)
+  const { t } = useI18n()
+  const compareModes: { value: CompareMode; label: string }[] = [
+    { value: 'base', label: t.lab.baseStats },
+    { value: '50', label: t.lab.levelOption(50) },
+    { value: '100', label: t.lab.levelOption(100) },
+  ]
 
   const selected = compare.filter(Boolean)
   const results = useQueries({ queries: selected.map((name) => pokemonQuery(name)) })
@@ -323,21 +331,21 @@ function Comparator({ names }: { names: string[] }) {
   return (
     <>
       <div className="field">
-        <span className="field-label">Comparar por</span>
-        <SegmentedControl label="Comparar por" options={COMPARE_MODES} value={mode} onChange={(value) => setState((s) => ({ ...s, compareMode: value }))} />
+        <span className="field-label">{t.lab.compareBy}</span>
+        <SegmentedControl label={t.lab.compareBy} options={compareModes} value={mode} onChange={(value) => setState((s) => ({ ...s, compareMode: value }))} />
       </div>
 
       <div className="lab-picks">
         {compare.map((name, i) => (
           <div key={i} className="field">
-            <span className="field-label">Pokémon {i + 1}</span>
+            <span className="field-label">{t.lab.slot(i + 1)}</span>
             <Combobox
-              label={`Pokémon ${i + 1}`}
+              label={t.lab.slot(i + 1)}
               options={i < 2 ? names : optionalNames}
               value={name || (i < 2 ? null : '')}
               onChange={(value) => setSlot(i, value)}
-              getLabel={(n) => (n ? displayName(n) : 'Nenhum')}
-              placeholder="Nenhum"
+              getLabel={(n) => (n ? displayName(n) : t.lab.none)}
+              placeholder={t.lab.none}
             />
           </div>
         ))}
@@ -346,7 +354,7 @@ function Comparator({ names }: { names: string[] }) {
       {loading ? (
         <Skeleton height={380} />
       ) : loaded.length < 2 ? (
-        <Alert kind="info">Escolha pelo menos dois Pokémon para comparar.</Alert>
+        <Alert kind="info">{t.lab.pickTwo}</Alert>
       ) : (
         <section className="panel">
           <div className="cmp-cards" style={{ '--n': loaded.length } as CSSProperties}>
@@ -368,7 +376,7 @@ function Comparator({ names }: { names: string[] }) {
             </div>
             <div>
               <CompareTable names={shownNames} valuesList={valuesList} />
-              {mode !== 'base' && <p className="caption">Valores no nível {mode} com IVs 31, sem EVs e natureza neutra.</p>}
+              {mode !== 'base' && <p className="caption">{t.lab.levelNote(mode)}</p>}
             </div>
           </div>
         </section>
@@ -378,6 +386,7 @@ function Comparator({ names }: { names: string[] }) {
 }
 
 function CompareTable({ names, valuesList }: { names: string[]; valuesList: StatValues[] }) {
+  const { t } = useI18n()
   const rows: { label: string; values: number[] }[] = [
     ...STATS.map((s) => ({ label: s as string, values: valuesList.map((v) => v[s]) })),
     { label: 'Total', values: valuesList.map(sumStats) },
@@ -386,7 +395,7 @@ function CompareTable({ names, valuesList }: { names: string[]; valuesList: Stat
     <table className="lab-table">
       <thead>
         <tr>
-          <th>Atributo</th>
+          <th>{t.lab.stat}</th>
           {names.map((n, i) => (
             <th key={i} style={{ color: COMPARE_COLORS[i] }}>
               {displayName(n)}

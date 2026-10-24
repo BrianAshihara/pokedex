@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { applyAbilityToMatchups, defaultVersionGroup, normalizeQuery, sanitizeLookupName, sortedVersionGroups, summarizeEvolutionMethods, versionGroupLabel } from './pokeapi'
+import { applyAbilityToMatchups, defaultVersionGroup, evolutionOptions, normalizeQuery, sanitizeLookupName, sortedVersionGroups, summarizeEvolutionMethods, versionGroupLabel } from './pokeapi'
+import { en } from '../i18n/en'
+import { pt } from '../i18n/pt'
 import type { EvolutionDetail } from './types'
 
 const detail = (fields: Partial<EvolutionDetail>) => fields as EvolutionDetail
@@ -15,22 +17,29 @@ describe('busca tolerante', () => {
 
 describe('summarizeEvolutionMethods', () => {
   it('descreve evolução por nível', () => {
-    expect(summarizeEvolutionMethods([detail({ trigger: resource('level-up'), min_level: 16 })])).toBe('Nv 16')
+    expect(summarizeEvolutionMethods([detail({ trigger: resource('level-up'), min_level: 16 })], pt.evolution)).toBe('Nv 16')
   })
 
   it('descreve amizade e horário', () => {
-    expect(summarizeEvolutionMethods([detail({ trigger: resource('level-up'), min_happiness: 160, time_of_day: 'day' })])).toBe('Dia + Amizade')
+    expect(summarizeEvolutionMethods([detail({ trigger: resource('level-up'), min_happiness: 160, time_of_day: 'day' })], pt.evolution)).toBe('Dia + Amizade')
   })
 
   it('descreve uso de item e troca', () => {
-    expect(summarizeEvolutionMethods([detail({ trigger: resource('use-item'), item: resource('fire-stone') })])).toBe('Usar Fire Stone')
-    expect(summarizeEvolutionMethods([detail({ trigger: resource('trade'), held_item: resource('metal-coat') })])).toBe('Troca + Metal Coat')
+    expect(summarizeEvolutionMethods([detail({ trigger: resource('use-item'), item: resource('fire-stone') })], pt.evolution)).toBe('Usar Fire Stone')
+    expect(summarizeEvolutionMethods([detail({ trigger: resource('trade'), held_item: resource('metal-coat') })], pt.evolution)).toBe('Troca + Metal Coat')
   })
 
   it('junta métodos alternativos sem repetir', () => {
     const level = detail({ trigger: resource('level-up'), min_level: 36 })
     const item = detail({ trigger: resource('use-item'), item: resource('ice-stone') })
-    expect(summarizeEvolutionMethods([level, item, level])).toBe('Nv 36 / Usar Ice Stone')
+    expect(summarizeEvolutionMethods([level, item, level], pt.evolution)).toBe('Nv 36 / Usar Ice Stone')
+  })
+
+  it('descreve no idioma escolhido', () => {
+    const level = detail({ trigger: resource('level-up'), min_level: 36 })
+    const item = detail({ trigger: resource('use-item'), item: resource('ice-stone') })
+    expect(summarizeEvolutionMethods([level, item], en.evolution)).toBe('Lv 36 / Use Ice Stone')
+    expect(evolutionOptions([level, item], en.evolution).map((o) => o.usesItem)).toEqual([false, true])
   })
 })
 
