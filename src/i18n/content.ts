@@ -4,7 +4,7 @@ import { useI18n } from './I18nProvider'
 
 // Textos da PokeAPI traduzidos para PT-BR (a API não tem português). Gerados a partir de
 // scripts/i18n-source.en.json; veja scripts/i18n-content.mjs para atualizar.
-export type ContentKind = 'pokedex' | 'abilities' | 'moves'
+export type ContentKind = 'pokedex' | 'abilities' | 'moves' | 'items'
 
 type Translations = Record<string, string>
 
@@ -13,6 +13,7 @@ const LOADERS: Record<ContentKind, () => Promise<Translations>> = {
   pokedex: () => import('./content/pt/pokedex.json').then((m) => m.default as Translations),
   abilities: () => import('./content/pt/abilities.json').then((m) => m.default as Translations),
   moves: () => import('./content/pt/moves.json').then((m) => m.default as Translations),
+  items: () => import('./content/pt/items.json').then((m) => m.default as Translations),
 }
 
 const contentQuery = (kind: ContentKind) =>

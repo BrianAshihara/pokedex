@@ -1,10 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, type CSSProperties } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigationType, useSearchParams } from 'react-router'
-import { BookIcon, FlaskIcon, GithubIcon, GlobeIcon, LinkedinIcon, SwordIcon } from './components/icons'
+import { BagIcon, BookIcon, FlaskIcon, GithubIcon, GlobeIcon, LinkedinIcon, SwordIcon } from './components/icons'
 import { prefetchContent, useContentPrefetch } from './i18n/content'
 import { useI18n, type Language } from './i18n/I18nProvider'
 import { FROM_MOVE_LIST } from './lib/format'
+import { ItemPage } from './pages/ItemPage'
+import { ItemsListPage } from './pages/ItemsListPage'
 import { LabPage } from './pages/LabPage'
 import { MovePage } from './pages/MovePage'
 import { MovesListPage } from './pages/MovesListPage'
@@ -20,6 +22,7 @@ function TopNav() {
   const fromPokemon = onMove && !!params.get('de') && params.get('de') !== FROM_MOVE_LIST
   const onDex = pathname === '/' || pathname.startsWith('/pokemon') || fromPokemon
   const onMoves = pathname === '/golpes' || (onMove && !fromPokemon)
+  const onItems = pathname === '/itens' || pathname.startsWith('/item/')
   return (
     <nav className="topnav" aria-label={t.nav.label}>
       <NavLink to="/" className={onDex ? 'active' : undefined}>
@@ -29,6 +32,10 @@ function TopNav() {
       <NavLink to="/golpes" className={onMoves ? 'active' : undefined}>
         <SwordIcon />
         {t.nav.moves}
+      </NavLink>
+      <NavLink to="/itens" className={onItems ? 'active' : undefined}>
+        <BagIcon />
+        {t.nav.items}
       </NavLink>
       <NavLink to="/laboratorio" className={({ isActive }) => (isActive ? 'active' : undefined)}>
         <FlaskIcon />
@@ -122,6 +129,8 @@ export function App() {
             <Route path="/pokemon/:ref" element={<PokemonPage />} />
             <Route path="/golpes" element={<MovesListPage />} />
             <Route path="/golpe/:slug" element={<MovePage />} />
+            <Route path="/itens" element={<ItemsListPage />} />
+            <Route path="/item/:slug" element={<ItemPage />} />
             <Route path="/laboratorio" element={<LabPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -1,4 +1,8 @@
 import type { Dictionary } from '../i18n/pt'
+import championsItems from '../data/champions-items.json'
+import { curatedEncounters, groupEncounters } from './encounters'
+import hiddenItemCategories from './hidden-item-categories.json'
+import { groupFlavorTexts, itemGroup, itemVariant, megaStoneUser } from './items'
 import type {
   Ability,
   AbilityData,
@@ -7,6 +11,10 @@ import type {
   EvolutionDetail,
   EvolutionNode,
   EvolutionTree,
+  GameEncounters,
+  ItemDetail,
+  ItemListItem,
+  ItemPokemon,
   LearnedMove,
   Learnset,
   MachineData,
@@ -18,6 +26,8 @@ import type {
   MoveListItem,
   PokemonListItem,
   Pokemon,
+  PreEvolutionEncounters,
+  RawEncounterArea,
   RawPokemon,
   Species,
   TypeData,
@@ -674,4 +684,220 @@ export async function getAllPokemon(): Promise<PokemonListItem[]> {
       }
     })
     .sort((a, b) => a.speciesId - b.speciesId || a.id - b.id)
+}
+
+// Onde encontrar: o REST já vem agrupado por área e jogo (o GraphQL devolveria milhares de linhas no Magikarp).
+// Só os nomes das áreas vêm do GraphQL; se ele falhar, o nome é montado a partir do identificador.
+
+const AREA_NAMES_QUERY = `query ($areas: [String!]!) {
+  locationarea(where: { name: { _in: $areas } }) {
+    name
+    locationareanames(where: { language: { name: { _eq: "en" } } }) { name }
+    location { locationnames(where: { language: { name: { _eq: "en" } } }) { name } }
+  }
+}`
+
+interface AreaNamesResponse {
+  locationarea: {
+    name: string
+    locationareanames: { name: string }[]
+    location: { locationnames: { name: string }[] } | null
+  }[]
+}
+
+async function getAreaNames(areas: string[]): Promise<Map<string, string>> {
+  if (!areas.length) return new Map()
+  try {
+    const data = await graphql<AreaNamesResponse>(AREA_NAMES_QUERY, { areas })
+    return new Map(
+      data.locationarea.flatMap((area) => {
+        const name = area.locationareanames[0]?.name || area.location?.locationnames[0]?.name
+        // Algumas áreas vêm como "Road 22" em vez de "Route 22".
+        return name ? [[area.name, name.replace(/^Road (\d)/, 'Route $1')] as [string, string]] : []
+      }),
+    )
+  } catch {
+    return new Map()
+  }
+}
+
+export function getEncounters(pokemonName: string): Promise<GameEncounters[]> {
+  return cached(`encounters:${pokemonName}`, async () => {
+    const areas = (await getJson<RawEncounterArea[]>(`${BASE_URL}/pokemon/${pokemonName}/encounters`)) ?? []
+    return groupEncounters(areas, await getAreaNames(areas.map((a) => a.location_area.name)))
+  })
+}
+
+/** Encontros de cada pré-evolução, da mais próxima para a mais distante. */
+export async function getPreEvolutionEncounters(species: Species): Promise<PreEvolutionEncounters[]> {
+  const result: PreEvolutionEncounters[] = []
+  let parentName = species.evolves_from_species?.name
+  while (parentName) {
+    const parent = await fetchSpecies(parentName)
+    if (!parent) break
+    const games = await getEncounters(parent.varieties.find((v) => v.is_default)?.pokemon.name ?? parent.name)
+    result.push({ species: parent.name, games: games.length ? games : curatedEncounters(parent.name) })
+    parentName = parent.evolves_from_species?.name
+  }
+  return result
+}
+
+const CHAMPIONS_ITEMS = new Set(championsItems.items)
+
+const ITEM_FIELDS = `
+  name
+  fling_power
+  itemcategory { name }
+  itemnames(where: { language: { name: { _eq: "en" } } }) { name }
+  itemeffecttexts(where: { language: { name: { _eq: "en" } } }) { short_effect }
+  itemflavortexts(where: { language: { name: { _eq: "en" } } }, order_by: { version_group_id: desc }, limit: 1) { flavor_text }
+  itemgameindices(order_by: { generation_id: asc }, limit: 1) { generation_id }
+  itemsprites { sprites(path: "default") }
+  pokemonformconditions(limit: 1) { pokemon_form { pokemon { name } } }
+`
+
+interface RawItem {
+  name: string
+  fling_power: number | null
+  itemcategory: { name: string } | null
+  itemnames: { name: string }[]
+  itemeffecttexts: { short_effect: string }[]
+  itemflavortexts: { flavor_text: string }[]
+  itemgameindices: { generation_id: number }[]
+  itemsprites: { sprites: string | null }[]
+  pokemonformconditions: { pokemon_form: { pokemon: { name: string } | null } | null }[]
+}
+
+function slimItem(item: RawItem): ItemListItem {
+  const category = item.itemcategory?.name ?? 'other'
+  return {
+    slug: item.name,
+    name: item.itemnames[0]?.name || titleize(item.name),
+    category,
+    group: itemGroup(category),
+    generation: item.itemgameindices[0]?.generation_id ?? 0,
+    sprite: item.itemsprites[0]?.sprites ?? null,
+    // Efeito resumido; sem ele, o texto dos jogos (mesma regra de scripts/i18n-content.mjs).
+    effect: cleanText(item.itemeffecttexts[0]?.short_effect || item.itemflavortexts[0]?.flavor_text || ''),
+    megaUser: megaStoneUser(item.pokemonformconditions[0]?.pokemon_form?.pokemon?.name),
+    champions: CHAMPIONS_ITEMS.has(item.name),
+  }
+}
+
+const ALL_ITEMS_QUERY = `query ($hidden: [String!]!) {
+  item(where: { itemcategory: { name: { _nin: $hidden } } }, order_by: { id: asc }) { ${ITEM_FIELDS} }
+}`
+
+export async function getAllItems(): Promise<ItemListItem[]> {
+  const data = await graphql<{ item: RawItem[] }>(ALL_ITEMS_QUERY, { hidden: hiddenItemCategories })
+  // A API repete alguns itens (ex.: Roseli Berry): fica a entrada que tem descrição.
+  const bySlug = new Map<string, ItemListItem>()
+  for (const item of data.item.map(slimItem)) {
+    const seen = bySlug.get(item.slug)
+    if (!seen || (!seen.effect && item.effect)) bySlug.set(item.slug, item)
+  }
+  const items = [...bySlug.values()]
+  const uses = new Map<string, number>()
+  for (const item of items) uses.set(item.name, (uses.get(item.name) ?? 0) + 1)
+  return items.map((item) => {
+    const variant = uses.get(item.name)! > 1 ? itemVariant(item.slug) : null
+    return variant ? { ...item, name: `${item.name} (${variant})` } : item
+  })
+}
+
+const POKEMON_CARD_FIELDS = `
+  id
+  name
+  pokemon_species_id
+  pokemontypes(order_by: { slot: asc }) { type { name } }
+  pokemonsprites { sprites(path: "front_default") }
+`
+
+const EVOLVED_SPECIES = `pokemonspecy { pokemons(where: { is_default: { _eq: true } }) { ${POKEMON_CARD_FIELDS} } }`
+
+const ITEM_DETAIL_QUERY = `query ($slug: String!) {
+  item(where: { name: { _eq: $slug } }) {
+    ${ITEM_FIELDS}
+    itemflingeffect { name }
+    flavors: itemflavortexts(where: { language: { name: { _eq: "en" } } }, order_by: { version_group_id: asc }) { flavor_text versiongroup { name } }
+    prices: itemprices(where: { _or: [{ purchase_price: { _gt: 0 } }, { sell_price: { _gt: 0 } }] }, order_by: { version_group_id: desc }, limit: 1) { purchase_price sell_price }
+    itemattributemaps { itemattribute { name } }
+    pokemonitems { rarity pokemon { ${POKEMON_CARD_FIELDS} } }
+    pokemonevolutions { ${EVOLVED_SPECIES} }
+    PokemonevolutionsByHeldItemId { ${EVOLVED_SPECIES} }
+    forms: pokemonformconditions { pokemon_form { pokemon { ${POKEMON_CARD_FIELDS} } } }
+  }
+}`
+
+interface RawCardPokemon {
+  id: number
+  name: string
+  pokemon_species_id: number
+  pokemontypes: { type: { name: string } }[]
+  pokemonsprites: { sprites: string | null }[]
+}
+
+interface RawEvolution {
+  pokemonspecy: { pokemons: RawCardPokemon[] } | null
+}
+
+interface RawItemDetail extends RawItem {
+  itemflingeffect: { name: string } | null
+  flavors: { flavor_text: string; versiongroup: { name: string } | null }[]
+  prices: { purchase_price: number | null; sell_price: number | null }[]
+  itemattributemaps: { itemattribute: { name: string } }[]
+  pokemonitems: { rarity: number; pokemon: RawCardPokemon | null }[]
+  pokemonevolutions: RawEvolution[]
+  PokemonevolutionsByHeldItemId: RawEvolution[]
+  forms: { pokemon_form: { pokemon: RawCardPokemon | null } | null }[]
+}
+
+function cardPokemon(p: RawCardPokemon): ItemPokemon {
+  return {
+    name: p.name,
+    id: p.id,
+    speciesId: p.pokemon_species_id,
+    types: p.pokemontypes.map((t) => t.type.name),
+    sprite: p.pokemonsprites[0]?.sprites ?? null,
+  }
+}
+
+const byDexNumber = (a: ItemPokemon, b: ItemPokemon) => a.speciesId - b.speciesId || a.id - b.id
+
+function uniqueCards(pokemon: (RawCardPokemon | null | undefined)[]): ItemPokemon[] {
+  const cards = new Map<string, ItemPokemon>()
+  for (const p of pokemon) if (p) cards.set(p.name, cardPokemon(p))
+  return [...cards.values()].sort(byDexNumber)
+}
+
+export function getItem(slug: string): Promise<ItemDetail | null> {
+  return cached(`item:${slug}`, async () => {
+    const data = await graphql<{ item: RawItemDetail[] }>(ITEM_DETAIL_QUERY, { slug })
+    const item = data.item[0]
+    if (!item) return null
+
+    // O mesmo Pokémon aparece uma vez por jogo: fica a maior chance.
+    const holders = new Map<string, ItemPokemon>()
+    for (const { rarity, pokemon } of item.pokemonitems) {
+      if (!pokemon) continue
+      const holder = holders.get(pokemon.name)
+      if (!holder) holders.set(pokemon.name, { ...cardPokemon(pokemon), rarity })
+      else holder.rarity = Math.max(holder.rarity ?? 0, rarity)
+    }
+
+    const variant = itemVariant(slug)
+    const base = slimItem(item)
+    return {
+      ...base,
+      name: variant ? `${base.name} (${variant})` : base.name,
+      flingPower: item.fling_power,
+      flingEffect: item.itemflingeffect?.name ?? null,
+      price: item.prices[0] ? { buy: item.prices[0].purchase_price || null, sell: item.prices[0].sell_price || null } : null,
+      flavors: groupFlavorTexts(item.flavors.flatMap((f) => (f.versiongroup ? [{ versionGroup: f.versiongroup.name, text: cleanText(f.flavor_text) }] : []))),
+      attributes: item.itemattributemaps.map((a) => a.itemattribute.name),
+      heldBy: [...holders.values()].sort(byDexNumber),
+      evolves: uniqueCards([...item.pokemonevolutions, ...item.PokemonevolutionsByHeldItemId].map((e) => e.pokemonspecy?.pokemons[0])),
+      megaForms: uniqueCards(item.forms.map((f) => f.pokemon_form?.pokemon)),
+    }
+  })
 }

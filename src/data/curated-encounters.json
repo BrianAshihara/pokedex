@@ -1,0 +1,101 @@
+{
+  "phione": [
+    { "games": ["diamond", "pearl", "platinum", "heartgold", "soulsilver", "x", "y", "omega-ruby", "alpha-sapphire", "sun", "moon", "ultra-sun", "ultra-moon", "brilliant-diamond", "shining-pearl", "scarlet", "violet"], "area": null, "method": "breed", "note": { "pt": "Cruze um Manaphy com Ditto.", "en": "Breed a Manaphy with Ditto." } },
+    { "games": ["legends-arceus"], "area": "Cobalt Coastlands: Seaside Hollow", "method": "static", "note": { "pt": "Três no Request 66; ilimitado depois de capturar Manaphy.", "en": "Three in Request 66; unlimited after catching Manaphy." } }
+  ],
+  "keldeo": [
+    { "games": ["black", "white", "black-2", "white-2", "x", "y", "omega-ruby", "alpha-sapphire", "scarlet", "violet"], "area": null, "method": "event" },
+    { "games": ["the-crown-tundra-sword", "the-crown-tundra-shield"], "area": "Ballimere Lake", "method": "static", "note": { "pt": "Forma Resolute.", "en": "Resolute Form." } },
+    { "games": ["mega-dimension"], "area": "Hyperspace Lumiose", "method": "static", "note": { "pt": "Exige um scan especial. Só um.", "en": "Requires a special scan. Only one." } }
+  ],
+  "meloetta": [
+    { "games": ["black", "white", "black-2", "white-2", "x", "y", "omega-ruby", "alpha-sapphire", "sun", "moon", "ultra-sun", "ultra-moon"], "area": null, "method": "event" },
+    { "games": ["the-indigo-disk-scarlet", "the-indigo-disk-violet"], "area": "Coastal Biome", "method": "static", "note": { "pt": "Só um.", "en": "Only one." } },
+    { "games": ["mega-dimension"], "area": "Hyperspace Lumiose", "method": "static", "note": { "pt": "Exige um scan especial. Só um.", "en": "Requires a special scan. Only one." } }
+  ],
+  "genesect": [
+    { "games": ["black", "white", "black-2", "white-2", "x", "y", "omega-ruby", "alpha-sapphire", "sword", "shield"], "area": null, "method": "event" },
+    { "games": ["mega-dimension"], "area": "Hyperspace Lumiose", "method": "static", "note": { "pt": "Missão secundária 191, \"Collect Four Drives\". Só um.", "en": "Side Mission 191, \"Collect Four Drives\". Only one." } }
+  ],
+  "diancie": [
+    { "games": ["x", "y", "omega-ruby", "alpha-sapphire"], "area": null, "method": "event" },
+    { "games": ["legends-za"], "area": "Magenta District: Magenta Sector 8", "method": "event", "note": { "pt": "Exige ativação por Mystery Gift. Só um.", "en": "Requires Mystery Gift activation. Only one." } }
+  ],
+  "hoopa": [
+    { "games": ["x", "y", "omega-ruby", "alpha-sapphire", "sun", "moon", "ultra-sun", "ultra-moon"], "area": null, "method": "event" },
+    { "games": ["mega-dimension"], "area": "Hyperspace Lumiose", "method": "static", "note": { "pt": "Missão secundária 196, \"The Djinn Unbound\". Só um.", "en": "Side Mission 196, \"The Djinn Unbound\". Only one." } }
+  ],
+  "volcanion": [
+    { "games": ["x", "y", "omega-ruby", "alpha-sapphire", "sword", "shield"], "area": null, "method": "event" },
+    { "games": ["mega-dimension"], "area": "Vert District: Pokémon Research Lab", "method": "static", "note": { "pt": "Missão secundária 194, \"Volcanion Unleashed\". Só um.", "en": "Side Mission 194, \"Volcanion Unleashed\". Only one." } }
+  ],
+  "marshadow": [
+    { "games": ["sun", "moon", "sword", "shield"], "area": null, "method": "event" },
+    { "games": ["mega-dimension"], "area": "Rouge Sector 1", "method": "static", "note": { "pt": "Missão secundária 192, \"The Stealthy Shadow\". Só um.", "en": "Side Mission 192, \"The Stealthy Shadow\". Only one." } }
+  ],
+  "zeraora": [
+    { "games": ["ultra-sun", "ultra-moon"], "area": null, "method": "event" },
+    { "games": ["mega-dimension"], "area": "Hyperspace Lumiose", "method": "event", "note": { "pt": "Exige ativação por Mystery Gift. Só um.", "en": "Requires Mystery Gift activation. Only one." } }
+  ],
+  "meltan": [
+    { "games": ["lets-go-pikachu", "lets-go-eevee"], "area": "GO Park", "method": "go-transfer", "note": { "pt": "Transferido do Pokémon GO.", "en": "Transferred from Pokémon GO." } },
+    { "games": ["mega-dimension"], "area": "Rouge Sector 1", "method": "static", "note": { "pt": "Missão secundária 193, \"Dreams of Meltan\". Só um.", "en": "Side Mission 193, \"Dreams of Meltan\". Only one." } }
+  ],
+  "melmetal": [
+    { "games": ["lets-go-pikachu", "lets-go-eevee"], "area": "GO Park", "method": "go-transfer", "note": { "pt": "Transferido do Pokémon GO.", "en": "Transferred from Pokémon GO." } },
+    { "games": ["mega-dimension"], "area": "Hyperspace Lumiose", "method": "static", "note": { "pt": "Missão secundária 193, \"Dreams of Meltan\". Só um.", "en": "Side Mission 193, \"Dreams of Meltan\". Only one." } }
+  ],
+  "zarude": [
+    { "games": ["sword", "shield", "scarlet", "violet"], "area": null, "method": "event" }
+  ],
+  "enamorus": [
+    { "games": ["legends-arceus"], "area": "Crimson Mirelands: Scarlet Bog", "method": "static", "note": { "pt": "Forma Incarnate. Só um.", "en": "Incarnate Forme. Only one." } }
+  ],
+  "wo-chien": [
+    { "games": ["scarlet", "violet"], "area": "South Province: Area One", "method": "static", "note": { "pt": "Só um.", "en": "Only one." } }
+  ],
+  "chien-pao": [
+    { "games": ["scarlet", "violet"], "area": "West Province: Area One", "method": "static", "note": { "pt": "Só um.", "en": "Only one." } }
+  ],
+  "ting-lu": [
+    { "games": ["scarlet", "violet"], "area": "North Province: Socarrat Trail", "method": "static", "note": { "pt": "Só um.", "en": "Only one." } }
+  ],
+  "chi-yu": [
+    { "games": ["scarlet", "violet"], "area": "North Province: Area Two", "method": "static", "note": { "pt": "Só um.", "en": "Only one." } }
+  ],
+  "koraidon": [
+    { "games": ["scarlet"], "area": "Poco Path", "method": "static", "note": { "pt": "Limited Build, sem poder batalhar até o fim da história. Só um.", "en": "Limited Build, can't battle until after the credits. Only one." } },
+    { "games": ["scarlet"], "area": "Area Zero", "method": "static", "note": { "pt": "Apex Build, depois dos créditos. Só um.", "en": "Apex Build, after the credits. Only one." } }
+  ],
+  "miraidon": [
+    { "games": ["violet"], "area": "Poco Path", "method": "static", "note": { "pt": "Low-Power Mode, sem poder batalhar até o fim da história. Só um.", "en": "Low-Power Mode, can't battle until after the credits. Only one." } },
+    { "games": ["violet"], "area": "Area Zero", "method": "static", "note": { "pt": "Ultimate Mode, depois dos créditos. Só um.", "en": "Ultimate Mode, after the credits. Only one." } }
+  ],
+  "okidogi": [
+    { "games": ["the-teal-mask-scarlet", "the-teal-mask-violet"], "area": "Paradise Barrens", "method": "static", "note": { "pt": "Depois da história de The Teal Mask. Só um.", "en": "After The Teal Mask's main story. Only one." } }
+  ],
+  "munkidori": [
+    { "games": ["the-teal-mask-scarlet", "the-teal-mask-violet"], "area": "Wistful Fields", "method": "static", "note": { "pt": "Depois da história de The Teal Mask. Só um.", "en": "After The Teal Mask's main story. Only one." } }
+  ],
+  "fezandipiti": [
+    { "games": ["the-teal-mask-scarlet", "the-teal-mask-violet"], "area": "Oni Mountain", "method": "static", "note": { "pt": "Depois da história de The Teal Mask. Só um.", "en": "After The Teal Mask's main story. Only one." } }
+  ],
+  "ogerpon": [
+    { "games": ["the-teal-mask-scarlet", "the-teal-mask-violet"], "area": "Dreaded Den", "method": "static", "note": { "pt": "Teal Mask. Só um.", "en": "Teal Mask. Only one." } }
+  ],
+  "terapagos": [
+    { "games": ["the-indigo-disk-scarlet", "the-indigo-disk-violet"], "area": "Area Zero Underdepths", "method": "static", "note": { "pt": "Só um.", "en": "Only one." } }
+  ],
+  "pecharunt": [
+    { "games": ["the-teal-mask-scarlet", "the-teal-mask-violet"], "area": "Loyalty Plaza", "method": "event", "note": { "pt": "Exige a Mythical Pecha Berry. Só um.", "en": "Requires the Mythical Pecha Berry. Only one." } }
+  ],
+  "sprigatito": [
+    { "games": ["scarlet", "violet"], "area": "Cabo Poco", "method": "gift", "note": { "pt": "Pokémon inicial, entregue por Clavell.", "en": "First partner Pokémon from Clavell." } }
+  ],
+  "fuecoco": [
+    { "games": ["scarlet", "violet"], "area": "Cabo Poco", "method": "gift", "note": { "pt": "Pokémon inicial, entregue por Clavell.", "en": "First partner Pokémon from Clavell." } }
+  ],
+  "quaxly": [
+    { "games": ["scarlet", "violet"], "area": "Cabo Poco", "method": "gift", "note": { "pt": "Pokémon inicial, entregue por Clavell.", "en": "First partner Pokémon from Clavell." } }
+  ]
+}

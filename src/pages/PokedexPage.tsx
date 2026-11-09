@@ -7,6 +7,7 @@ import { SegmentedControl, Toggle } from '../components/controls'
 import { DexSearch } from '../components/DexSearch'
 import { EvolutionCard } from '../components/EvolutionCard'
 import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon } from '../components/icons'
+import { LocationsPanel } from '../components/LocationsPanel'
 import { MovesPanel } from '../components/MovesPanel'
 import { PokemonBrowser } from '../components/PokemonBrowser'
 import { AbilitiesCard, Hero, InfoCard, MatchupsCard, type ImageMode } from '../components/pokemon'
@@ -243,6 +244,8 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
       )}
 
       <MovesPanel key={pokemon.name} pokemon={pokemon} versionGroup={versionGroup} onVersionGroupChange={setVersionGroup} />
+
+      <LocationsPanel key={`locations-${pokemon.name}`} pokemon={pokemon} species={species} />
     </>
   )
 }

@@ -23,6 +23,13 @@ export const FlaskIcon = (props: IconProps) => (
   </Icon>
 )
 
+export const BagIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M6 8h12l1.2 11.2A1.6 1.6 0 0 1 17.6 21H6.4a1.6 1.6 0 0 1-1.6-1.8L6 8Z" />
+    <path d="M9 11V6a3 3 0 0 1 6 0v5" />
+  </Icon>
+)
+
 export const SearchIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="11" cy="11" r="7" />

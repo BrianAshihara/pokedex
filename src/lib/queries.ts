@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import * as api from './pokeapi'
-import type { Learnset, Pokemon } from './types'
+import type { Learnset, Pokemon, Species } from './types'
 
 export const pokemonQuery = (ref: string) =>
   queryOptions({ queryKey: ['pokemon', ref.trim().toLowerCase()], queryFn: () => api.fetchPokemon(ref) })
@@ -38,3 +38,17 @@ export const moveLearnersQuery = (slug: string, versionGroup: string) =>
 export const allMovesQuery = () => queryOptions({ queryKey: ['all-moves'], queryFn: api.getAllMoves })
 
 export const allPokemonQuery = () => queryOptions({ queryKey: ['all-pokemon'], queryFn: api.getAllPokemon })
+
+export const encountersQuery = (pokemonName: string) =>
+  queryOptions({ queryKey: ['encounters', pokemonName], queryFn: () => api.getEncounters(pokemonName) })
+
+export const preEvolutionEncountersQuery = (species: Species | null) =>
+  queryOptions({
+    queryKey: ['pre-evolution-encounters', species?.name],
+    queryFn: () => api.getPreEvolutionEncounters(species!),
+    enabled: !!species?.evolves_from_species,
+  })
+
+export const allItemsQuery = () => queryOptions({ queryKey: ['all-items'], queryFn: api.getAllItems })
+
+export const itemQuery = (slug: string) => queryOptions({ queryKey: ['item', slug], queryFn: () => api.getItem(slug) })

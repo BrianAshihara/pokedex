@@ -10,7 +10,8 @@
     "lint": "oxlint",
     "test": "vitest run",
     "i18n:extract": "node scripts/i18n-content.mjs extract",
-    "i18n:check": "node scripts/i18n-content.mjs check"
+    "i18n:check": "node scripts/i18n-content.mjs check",
+    "data:champions": "node scripts/champions-items.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",

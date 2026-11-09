@@ -65,6 +65,7 @@ export interface Species {
   capture_rate: number | null
   generation: NamedResource | null
   evolution_chain: { url: string } | null
+  evolves_from_species: NamedResource | null
   varieties: { is_default: boolean; pokemon: NamedResource }[]
   genera: { genus: string; language: NamedResource }[]
   flavor_text_entries: LocalizedText[]
@@ -202,6 +203,94 @@ export interface EvolutionNode {
 export interface EvolutionTree {
   tree: EvolutionNode
   sprites: Record<string, string | null>
+}
+
+export interface RawEncounterArea {
+  location_area: NamedResource
+  version_details: {
+    version: NamedResource
+    encounter_details: {
+      min_level: number
+      max_level: number
+      chance: number
+      method: NamedResource
+      condition_values: NamedResource[]
+    }[]
+  }[]
+}
+
+export interface EncounterRow {
+  /** null em eventos e cruzamentos, que não acontecem em um lugar do mapa. */
+  areaName: string | null
+  method: string
+  minLevel: number | null
+  maxLevel: number | null
+  chance: number | null
+  conditions: string[]
+  /** Só nos encontros curados à mão. */
+  note?: { pt: string; en: string }
+  /** Pré-evolução encontrada neste local, quando o próprio Pokémon não aparece no jogo. */
+  via?: string
+}
+
+export interface PreEvolutionEncounters {
+  species: string
+  games: GameEncounters[]
+}
+
+/** Encontros de um ou mais jogos com exatamente os mesmos dados (ex.: Red e Blue). */
+export interface GameEncounters {
+  id: string
+  versions: string[]
+  rows: EncounterRow[]
+}
+
+export type ItemGroup = 'medicine' | 'training' | 'battle' | 'mega' | 'balls' | 'berries' | 'evolution' | 'key' | 'other'
+
+/** Linha da lista de todos os itens (página /itens). */
+export interface ItemListItem {
+  slug: string
+  name: string
+  category: string
+  group: ItemGroup
+  /** 0 quando a PokeAPI não registra a geração. */
+  generation: number
+  sprite: string | null
+  effect: string
+  /** Quem usa a Mega Stone, para descrever as que não têm texto na API. */
+  megaUser: string | null
+  /** Liberado na regulação atual de Pokémon Champions. */
+  champions: boolean
+}
+
+/** Mesmo texto dos jogos em uma ou mais versões. */
+export interface ItemFlavor {
+  versionGroups: string[]
+  text: string
+}
+
+/** Pokémon listado na página de um item. */
+export interface ItemPokemon {
+  name: string
+  id: number
+  speciesId: number
+  types: string[]
+  sprite: string | null
+  /** Maior chance de vir segurando o item, nos jogos em que aparece. */
+  rarity?: number
+}
+
+export interface ItemDetail extends ItemListItem {
+  flingPower: number | null
+  flingEffect: string | null
+  /** Do jogo mais recente que registra preço; a PokeAPI só tem isso para poucos itens. */
+  price: { buy: number | null; sell: number | null } | null
+  /** Do jogo mais recente para o mais antigo. */
+  flavors: ItemFlavor[]
+  attributes: string[]
+  heldBy: ItemPokemon[]
+  evolves: ItemPokemon[]
+  megaForms: ItemPokemon[]
 }
 
 /** Multiplicador de dano → tipos atacantes. Só multiplicadores diferentes de 1. */

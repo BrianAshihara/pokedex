@@ -12,7 +12,9 @@ import { readFileSync, writeFileSync } from 'node:fs'
 const GRAPHQL_URL = 'https://graphql.pokeapi.co/v1beta2'
 const SOURCE_FILE = new URL('./i18n-source.en.json', import.meta.url)
 const CONTENT_DIR = new URL('../src/i18n/content/pt/', import.meta.url)
-const KINDS = ['pokedex', 'abilities', 'moves']
+const KINDS = ['pokedex', 'abilities', 'moves', 'items']
+// As categorias escondidas da aba de Itens não precisam de tradução.
+const HIDDEN_ITEMS = readFileSync(new URL('../src/lib/hidden-item-categories.json', import.meta.url), 'utf8')
 
 const EN = '{ language: { name: { _eq: "en" } } }'
 
@@ -31,6 +33,11 @@ const QUERY = `{
     moveeffect { moveeffecteffecttexts(where: ${EN}) { short_effect } }
     moveflavortexts(where: ${EN}, order_by: { version_group_id: desc }, limit: 1) { flavor_text }
   }
+  item(where: { itemcategory: { name: { _nin: ${HIDDEN_ITEMS.trim()} } } }, order_by: { id: asc }) {
+    name
+    itemeffecttexts(where: ${EN}) { short_effect }
+    itemflavortexts(where: ${EN}, order_by: { version_group_id: desc }, limit: 1) { flavor_text }
+  }
 }`
 
 /** Igual ao cleanText do app: tira quebras de linha e hifenização dos textos dos jogos. */
@@ -45,7 +52,7 @@ async function fetchSource() {
   })
   const body = await response.json()
   if (body.errors) throw new Error(body.errors[0].message)
-  const { pokemonspecies, ability, move } = body.data
+  const { pokemonspecies, ability, move, item } = body.data
 
   const entries = (rows, pick) => Object.fromEntries(rows.map((r) => [r.name, clean(pick(r))]).filter(([, text]) => text))
   return {
@@ -54,6 +61,8 @@ async function fetchSource() {
     abilities: entries(ability, (a) => a.abilityflavortexts[0]?.flavor_text || a.abilityeffecttexts[0]?.short_effect),
     // Golpe: efeito resumido; sem ele, o texto dos jogos.
     moves: entries(move, (m) => m.moveeffect?.moveeffecteffecttexts[0]?.short_effect || m.moveflavortexts[0]?.flavor_text),
+    // Item: efeito resumido; sem ele, o texto dos jogos.
+    items: entries(item, (i) => i.itemeffecttexts[0]?.short_effect || i.itemflavortexts[0]?.flavor_text),
   }
 }
 

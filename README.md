@@ -55,6 +55,7 @@ A aplicação roda inteiramente no navegador: não há backend, e todos os dados
 | Atributos base | Hexágono no estilo de Sword/Shield, barras por faixa de valor e mínimo/máximo no nível 100 |
 | Formas alternativas | Mega, Gigantamax, formas regionais e demais variedades da espécie |
 | Evolução | Árvore completa com ramificações (ex.: Eevee, Wurmple), métodos de evolução e links para cada estágio |
+| Onde encontrar | Locais de captura por jogo, com método, nível, chance e condições (dados da PokeAPI até Sword/Shield). Em jogos onde o Pokémon só vem por evolução, mostra o local da pré-evolução. Iniciais, lendários e míticos sem registro têm dados curados à mão |
 | Golpes | Golpes aprendidos por nível, ovo, MT e tutor em cada jogo, com tipo, categoria, poder, precisão, PP e efeito. Cada golpe abre a página dele |
 
 As preferências de exibição (estilo da imagem, shiny e jogo selecionado nos golpes) ficam salvas no navegador.
@@ -68,6 +69,13 @@ Seção própria (`/golpes`), acessível pelo menu no topo.
 - **Botão de voltar contextual**: volta ao Pokémon de origem ("Voltar para Charizard") ou à lista de golpes com os mesmos filtros ("Voltar para Golpes").
 
 Os filtros das listas ficam na URL, então voltar pelo navegador ou compartilhar o link mantém a lista exatamente como estava.
+
+### Itens
+
+Seção própria (`/itens`), acessível pelo menu no topo.
+
+- **Lista de itens**: cerca de 1.100 itens com busca por nome, filtros de categoria, geração e só os de Pokémon Champions, e colunas ordenáveis. Ficam de fora MTs (já cobertas em Golpes), cristais Dynamax, materiais de MT, ingredientes de sanduíche e itens sem uso nos jogos.
+- **Página do item** (`/item/leftovers`): descrição, categoria, geração, preço, características, efeito com o golpe Fling, texto em cada jogo, itens parecidos e os Pokémon relacionados: quem Mega Evolui com ele, quem evolui usando ele e quais Pokémon selvagens podem segurá-lo.
 
 ### Laboratório
 
@@ -85,7 +93,7 @@ Página separada (`/laboratorio`), acessível pelo menu no topo ou pelo botão "
 A interface está em português (PT-BR) e inglês (EN-US), com um seletor discreto no topo. O idioma inicial segue o do navegador (português abre em PT, qualquer outro em EN), e a escolha fica salva.
 
 - **Ficam em inglês nos dois idiomas**: nomes de Pokémon, tipos, golpes, habilidades, itens, jogos, atributos, naturezas e categorias (ex.: Flame Pokémon). Medidas sempre no SI.
-- **Traduzidos**: toda a interface e as descrições da Pokédex, dos golpes e das habilidades. Como a PokeAPI não tem textos em português, esses ~2.200 textos foram traduzidos e ficam em `src/i18n/content/pt/`. Medidas imperiais das descrições foram convertidas para o SI.
+- **Traduzidos**: toda a interface e as descrições da Pokédex, dos golpes, das habilidades e dos itens. Como a PokeAPI não tem textos em português, esses ~3.200 textos foram traduzidos e ficam em `src/i18n/content/pt/`. Medidas imperiais das descrições foram convertidas para o SI.
 - **Sem custo no modo EN**: as traduções ficam em arquivos separados, baixados só no modo PT. Se a API ganhar um texto novo, ele aparece em inglês até ser traduzido.
 
 ## Stack
@@ -148,6 +156,7 @@ Outros comandos:
 | `npm run lint` | Executa o lint |
 | `npm run i18n:check` | Compara a PokeAPI com as traduções e lista descrições novas, alteradas ou sem uso |
 | `npm run i18n:extract` | Atualiza `scripts/i18n-source.en.json`, o inglês de onde cada tradução saiu |
+| `npm run data:champions` | Atualiza a lista de itens de Pokémon Champions a partir das estatísticas do Smogon |
 
 ## Deploy
 
@@ -196,4 +205,4 @@ pokedex/
 
 Desenvolvido por **Brian Ashihara**.
 
-Dados fornecidos pela [PokeAPI](https://pokeapi.co/). Pokémon e seus respectivos nomes são marcas registradas da Nintendo, Game Freak e The Pokémon Company. Este é um projeto de fãs, sem fins comerciais e sem afiliação oficial.
+Dados fornecidos pela [PokeAPI](https://pokeapi.co/). Os locais dos iniciais, lendários e míticos sem registro na API foram levantados na [Bulbapedia](https://bulbapedia.bulbagarden.net/). Pokémon e seus respectivos nomes são marcas registradas da Nintendo, Game Freak e The Pokémon Company. Este é um projeto de fãs, sem fins comerciais e sem afiliação oficial.

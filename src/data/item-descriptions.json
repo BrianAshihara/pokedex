@@ -1,0 +1,50 @@
+{
+  "booster-energy": {
+    "pt": "Segurado: ativa Protosynthesis ou Quark Drive em Pokémon Paradox, mesmo sem sol ou Electric Terrain. É consumido após o uso.",
+    "en": "Held: activates Protosynthesis or Quark Drive on Paradox Pokémon, even without sun or Electric Terrain. Consumed after use."
+  },
+  "ability-shield": {
+    "pt": "Segurado: impede que a habilidade do portador seja alterada ou anulada.",
+    "en": "Held: prevents the holder's Ability from being changed or suppressed."
+  },
+  "clear-amulet": {
+    "pt": "Segurado: impede que outros Pokémon reduzam os atributos do portador.",
+    "en": "Held: prevents other Pokémon from lowering the holder's stats."
+  },
+  "mirror-herb": {
+    "pt": "Segurado: copia uma vez os aumentos de atributo de um oponente. É consumido após o uso.",
+    "en": "Held: copies an opponent's stat boosts once. Consumed after use."
+  },
+  "punching-glove": {
+    "pt": "Segurado: golpes de soco causam 10% mais dano e deixam de fazer contato.",
+    "en": "Held: punching moves deal 10% more damage and no longer make contact."
+  },
+  "covert-cloak": {
+    "pt": "Segurado: protege o portador dos efeitos adicionais dos golpes.",
+    "en": "Held: protects the holder from the additional effects of moves."
+  },
+  "loaded-dice": {
+    "pt": "Segurado: golpes de múltiplos acertos do portador tendem a acertar mais vezes.",
+    "en": "Held: the holder's multi-hit moves tend to hit more times."
+  },
+  "fairy-feather": {
+    "pt": "Segurado: golpes do tipo Fairy do portador causam 20% mais dano.",
+    "en": "Held: the holder's Fairy-type moves deal 20% more damage."
+  },
+  "adamant-crystal": {
+    "pt": "Segurado por Dialga: assume a Forma Origin e aumenta em 20% o dano dos golpes Dragon e Steel.",
+    "en": "Held by Dialga: takes its Origin Forme and boosts its Dragon and Steel moves by 20%."
+  },
+  "lustrous-globe": {
+    "pt": "Segurado por Palkia: assume a Forma Origin e aumenta em 20% o dano dos golpes Dragon e Water.",
+    "en": "Held by Palkia: takes its Origin Forme and boosts its Dragon and Water moves by 20%."
+  },
+  "griseous-core": {
+    "pt": "Segurado por Giratina: assume a Forma Origin e aumenta em 20% o dano dos golpes Dragon e Ghost.",
+    "en": "Held by Giratina: takes its Origin Forme and boosts its Dragon and Ghost moves by 20%."
+  },
+  "roseli-berry": {
+    "pt": "Segurado: consumido ao receber um ataque superefetivo do tipo Fairy, reduzindo o dano pela metade.",
+    "en": "Held: consumed when struck by a super-effective Fairy-type attack to halve the damage."
+  }
+}

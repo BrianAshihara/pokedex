@@ -1889,6 +1889,235 @@ th[aria-sort] .ml-sort {
   margin-left: auto;
 }
 
+/* ---------- Onde encontrar (página do Pokémon) ---------- */
+
+.loc-note {
+  margin: -4px 0 10px;
+  font-size: 0.74rem;
+}
+.loc-evolves {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.loc-evolves a {
+  color: var(--yellow);
+  font-weight: 700;
+}
+.loc-table .loc-area {
+  white-space: normal;
+  min-width: 170px;
+}
+.loc-table .loc-details {
+  min-width: 170px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+/* ---------- Itens ---------- */
+
+.il-filters {
+  display: grid;
+  grid-template-columns: 2fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+.il-note {
+  margin: 0 0 10px;
+}
+.il-col-name {
+  width: 250px;
+}
+.il-col-group {
+  width: 140px;
+}
+.il-col-generation {
+  width: 70px;
+}
+.il-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: normal;
+}
+.il-name img,
+.il-noimg {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  image-rendering: pixelated;
+}
+.il-group {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--t) 62%, #1b2030);
+}
+.loc-via {
+  display: block;
+}
+.loc-via a {
+  color: var(--yellow);
+  font-weight: 700;
+}
+.item-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+}
+.item-art {
+  display: grid;
+  place-items: center;
+  width: 136px;
+  height: 136px;
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--t) 34%, transparent), color-mix(in srgb, var(--t) 8%, transparent));
+  border: 1px solid color-mix(in srgb, var(--t) 38%, transparent);
+}
+.item-art img {
+  image-rendering: pixelated;
+}
+.item-main h1 {
+  margin: 8px 0 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+.item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.item-champions {
+  padding: 2px 9px;
+  border: 1px solid rgba(255, 203, 5, 0.5);
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--yellow);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.item-facts {
+  margin: 0;
+  flex-direction: column;
+  gap: 14px;
+  padding-left: 22px;
+  border-left: 1px solid var(--border);
+}
+.item-columns {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 14px;
+  align-items: start;
+}
+.item-columns > :only-child {
+  grid-column: 1 / -1;
+}
+.item-columns > div:empty {
+  display: none;
+}
+.item-columns:has(> div:empty) {
+  grid-template-columns: 1fr;
+}
+.item-flavor-note {
+  margin: 0 0 10px;
+}
+.item-flavors {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.item-flavors li {
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+.item-flavors p {
+  margin: 0;
+  color: #c9cfdb;
+  line-height: 1.45;
+}
+.item-games {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 5px;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.item-fling {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.item-fling strong {
+  font-size: 2.2rem;
+  line-height: 1;
+  color: var(--yellow);
+  font-variant-numeric: tabular-nums;
+}
+.item-fling p {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #c9cfdb;
+}
+.item-fling a {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--yellow);
+}
+.item-related {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.item-related a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.item-related a:hover {
+  border-color: var(--yellow);
+}
+.item-related img {
+  flex: none;
+  image-rendering: pixelated;
+}
+.item-attrs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.item-attrs li {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
 /* ---------- Responsivo ---------- */
 
 @media (max-width: 1100px) {
@@ -1968,6 +2197,39 @@ th[aria-sort] .ml-sort {
     font-size: 0.56rem;
   }
   .slider output {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .il-filters,
+  .item-columns {
+    grid-template-columns: 1fr;
+  }
+  .item-hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .item-tags,
+  .item-attrs {
+    justify-content: center;
+  }
+  .item-facts {
+    flex-direction: row;
+    padding: 14px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}
+
+/* Com quatro abas, os ícones não cabem em telas de celular. */
+@media (max-width: 480px) {
+  .topnav a {
+    padding: 7px 8px;
+    font-size: 0.86rem;
+  }
+  .topnav svg {
     display: none;
   }
 }
