@@ -219,9 +219,19 @@ export interface RawEncounterArea {
   }[]
 }
 
+export interface AreaInfo {
+  name: string
+  /** Identificador do local que contém a área (ex.: mt-moon). */
+  location?: string
+  /** Nome do local, sem o andar ou trecho (ex.: Mt. Moon). */
+  place?: string
+}
+
 export interface EncounterRow {
   /** null em eventos e cruzamentos, que não acontecem em um lugar do mapa. */
   areaName: string | null
+  location?: string
+  place?: string
   method: string
   minLevel: number | null
   maxLevel: number | null

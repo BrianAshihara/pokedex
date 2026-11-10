@@ -1,7 +1,7 @@
 import curatedData from '../data/curated-encounters.json'
 import type { Dictionary } from '../i18n/pt'
 import { displayName } from './format'
-import type { EncounterRow, GameEncounters, PreEvolutionEncounters, RawEncounterArea } from './types'
+import type { AreaInfo, EncounterRow, GameEncounters, PreEvolutionEncounters, RawEncounterArea } from './types'
 
 interface CuratedEntry {
   games: string[]
@@ -106,12 +106,13 @@ const compareRows = (a: EncounterRow, b: EncounterRow) =>
   a.conditions.join().localeCompare(b.conditions.join())
 
 /** Soma as chances de cada slot por jogo, área, método e condições, em uma linha só. */
-export function groupEncounters(areas: RawEncounterArea[], areaNames: Map<string, string>): GameEncounters[] {
+export function groupEncounters(areas: RawEncounterArea[], areaNames: Map<string, AreaInfo>): GameEncounters[] {
   const byVersion = new Map<string, Map<string, EncounterRow>>()
 
   for (const area of areas) {
     const slug = area.location_area.name
-    const areaName = areaNames.get(slug) ?? displayName(slug.replace(/-area$/, ''))
+    const info = areaNames.get(slug)
+    const areaName = info?.name ?? displayName(slug.replace(/-area$/, ''))
     for (const { version, encounter_details: details } of area.version_details) {
       let rows = byVersion.get(version.name)
       if (!rows) byVersion.set(version.name, (rows = new Map()))
@@ -124,6 +125,8 @@ export function groupEncounters(areas: RawEncounterArea[], areaNames: Map<string
         if (!row) {
           rows.set(key, {
             areaName,
+            location: info?.location,
+            place: info?.place,
             method,
             minLevel: method === 'npc-trade' ? null : detail.min_level,
             maxLevel: method === 'npc-trade' ? null : detail.max_level,
@@ -174,6 +177,101 @@ export function addPreEvolutions(own: GameEncounters[], preEvolutions: PreEvolut
 
 export function methodLabel(method: string, texts: Dictionary['locations']): string {
   return texts.methods[method] ?? displayName(method)
+}
+
+export type EncounterKind = 'grass' | 'cave' | 'water' | 'fishing' | 'tree' | 'rock' | 'gift' | 'fixed' | 'trade' | 'roaming' | 'other'
+
+// O método "walk" vale para grama e para interiores: só o nome do local diferencia.
+const INDOORS = /cave|cavern|tunnel|grotto|chamber|\bmt\b|mount|ruins|tower|mansion|plant|ship|anne|victory road|underground|hideout|sewer|cellar|temple|factory|building|lab\b|\bhq\b|\bwell\b|ice path|seafoam|whirl islands|dragon'?s den/i
+
+const KIND_BY_METHOD: [RegExp, EncounterKind][] = [
+  [/roaming|wanderer|chase|flying/, 'roaming'],
+  [/rod|feebas|bubbling/, 'fishing'],
+  [/surf|seaweed|water|dive/, 'water'],
+  [/headbutt|berry-trees/, 'tree'],
+  [/rock-smash/, 'rock'],
+  [/cave-spots|bridge-spots/, 'cave'],
+  [/^(gift|gift-egg|event)$/, 'gift'],
+  [/static|raid|snag|grotto/, 'fixed'],
+  [/npc-trade/, 'trade'],
+  [/walk|grass|flowers|rough-terrain|overworld|horde|sos|ambush/, 'grass'],
+]
+
+/** Tipo visual do encontro, usado para escolher ícone, cor e explicação. */
+export function encounterKind(method: string, place: string | null): EncounterKind {
+  if (method === 'walk' && place && INDOORS.test(place)) return 'cave'
+  return KIND_BY_METHOD.find(([pattern]) => pattern.test(method))?.[1] ?? 'other'
+}
+
+/** Instrução em linguagem simples, para quem nunca jogou. */
+export function howToText(method: string, kind: EncounterKind, texts: Dictionary['locations']): string {
+  return texts.howTo[method] ?? (kind === 'other' ? methodLabel(method, texts) : texts.kindHowTo[kind])
+}
+
+export type Rarity = 'guaranteed' | 'common' | 'uncommon' | 'rare' | 'veryRare'
+
+export function rarityOf(row: Pick<EncounterRow, 'method' | 'chance'>): Rarity | null {
+  if (FIXED_METHODS.has(row.method)) return 'guaranteed'
+  if (row.chance === null) return null
+  if (row.chance >= 30) return 'common'
+  if (row.chance >= 10) return 'uncommon'
+  return row.chance >= 4 ? 'rare' : 'veryRare'
+}
+
+/** Um jeito de encontrar o Pokémon em um local, somando os andares e trechos em que ele vale. */
+export interface PlaceRow extends EncounterRow {
+  subAreas: string[]
+}
+
+export interface EncounterPlace {
+  key: string
+  /** null em eventos e cruzamentos, que não acontecem em um lugar. */
+  name: string | null
+  location?: string
+  rows: PlaceRow[]
+}
+
+const rowScore = (row: EncounterRow) => (rarityOf(row) === 'guaranteed' ? 101 : (row.chance ?? -1))
+
+/** A parte específica da área ("1F" em "Mt. Moon (1F)"), quando o local tem mais de uma. */
+function subAreaLabel(row: EncounterRow, place: string | null): string | null {
+  if (!row.areaName || !place || row.areaName === place) return null
+  const rest = row.areaName.startsWith(place) ? row.areaName.slice(place.length).replace(/^[\s\-–(,]+|\)$/g, '') : row.areaName
+  return rest || null
+}
+
+/** Mesmo método e condições em andares diferentes viram uma linha: faixa total de níveis e a melhor chance. */
+function mergeSubAreas(rows: EncounterRow[], place: string | null): PlaceRow[] {
+  const merged = new Map<string, PlaceRow>()
+  for (const row of rows) {
+    const key = `${row.method}|${row.conditions.join()}|${row.via ?? ''}`
+    const subArea = subAreaLabel(row, place)
+    const known = merged.get(key)
+    if (!known) {
+      merged.set(key, { ...row, subAreas: subArea ? [subArea] : [] })
+      continue
+    }
+    if (subArea && !known.subAreas.includes(subArea)) known.subAreas.push(subArea)
+    if (known.minLevel !== null && row.minLevel !== null) known.minLevel = Math.min(known.minLevel, row.minLevel)
+    if (known.maxLevel !== null && row.maxLevel !== null) known.maxLevel = Math.max(known.maxLevel, row.maxLevel)
+    if (known.chance !== null && row.chance !== null) known.chance = Math.max(known.chance, row.chance)
+  }
+  return [...merged.values()].sort((a, b) => rowScore(b) - rowScore(a))
+}
+
+/** Junta as linhas por local e coloca primeiro onde é mais fácil encontrar. */
+export function groupPlaces(rows: EncounterRow[]): EncounterPlace[] {
+  const byPlace = new Map<string, { name: string | null; location?: string; rows: EncounterRow[] }>()
+  for (const row of rows) {
+    const name = row.place ?? row.areaName
+    const key = row.location ?? name ?? row.method
+    const place = byPlace.get(key)
+    if (place) place.rows.push(row)
+    else byPlace.set(key, { name, location: row.location, rows: [row] })
+  }
+  const places = [...byPlace].map(([key, place]): EncounterPlace => ({ ...place, key, rows: mergeSubAreas(place.rows, place.name) }))
+  const score = (place: EncounterPlace) => Math.max(...place.rows.map(rowScore))
+  return places.sort((a, b) => score(b) - score(a) || (a.name ?? '').localeCompare(b.name ?? '', undefined, { numeric: true }))
 }
 
 /** Texto de uma condição. As raras, ligadas a um único evento da história, ficam com o nome original. */

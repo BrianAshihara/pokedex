@@ -55,7 +55,7 @@ A aplicação roda inteiramente no navegador: não há backend, e todos os dados
 | Atributos base | Hexágono no estilo de Sword/Shield, barras por faixa de valor e mínimo/máximo no nível 100 |
 | Formas alternativas | Mega, Gigantamax, formas regionais e demais variedades da espécie |
 | Evolução | Árvore completa com ramificações (ex.: Eevee, Wurmple), métodos de evolução e links para cada estágio |
-| Onde encontrar | Locais de captura por jogo, com método, nível, chance e condições (dados da PokeAPI até Sword/Shield). Em jogos onde o Pokémon só vem por evolução, mostra o local da pré-evolução. Iniciais, lendários e míticos sem registro têm dados curados à mão |
+| Onde encontrar | Mapa ilustrado de cada região (Kanto a Galar, mais Orre e Sevii Islands), desenhado para o projeto, com os locais destacados e cartões que explicam, em linguagem simples, como achar o Pokémon: ação, nível, raridade e condições, do lugar mais fácil ao mais difícil (dados da PokeAPI até Sword/Shield). Em jogos onde o Pokémon só vem por evolução, mostra o local da pré-evolução. Iniciais, lendários e míticos sem registro têm dados curados à mão |
 | Golpes | Golpes aprendidos por nível, ovo, MT e tutor em cada jogo, com tipo, categoria, poder, precisão, PP e efeito. Cada golpe abre a página dele |
 
 As preferências de exibição (estilo da imagem, shiny e jogo selecionado nos golpes) ficam salvas no navegador.

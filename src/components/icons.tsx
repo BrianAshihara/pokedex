@@ -30,6 +30,33 @@ export const BagIcon = (props: IconProps) => (
   </Icon>
 )
 
+export const MapPinIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 21s7-6.3 7-12a7 7 0 0 0-14 0c0 5.7 7 12 7 12Z" />
+    <circle cx="12" cy="9" r="2.5" />
+  </Icon>
+)
+
+const ENCOUNTER_KIND_PATHS: Record<string, string> = {
+  grass: 'M12 21c0-5 0-9-3-13M12 21c0-4 1-8 5-11M12 21c-1-3-3-6-7-7M12 21c1-3 3-5 7-6',
+  cave: 'M3 20 9.5 6l4 7 2-3 5.5 10ZM9.5 20v-3a2.5 2.5 0 0 1 5 0v3',
+  water: 'M2 9c2.5-2.5 5-2.5 7 0s4.5 2.5 6.5 0 4.5-2.5 6.5 0M2 15c2.5-2.5 5-2.5 7 0s4.5 2.5 6.5 0 4.5-2.5 6.5 0',
+  fishing: 'M15 3v11a5 5 0 0 1-10 0v-2l3 3M13 3h4',
+  tree: 'M12 22v-7M12 3a6 6 0 0 0-5.7 7.9A4.5 4.5 0 0 0 8 19h8a4.5 4.5 0 0 0 1.7-8.1A6 6 0 0 0 12 3Z',
+  rock: 'M4 18l2.5-8L11 5l7 2 3 7-3 5H6ZM11 5l1 6 9 3M12 11l-6 8',
+  gift: 'M4 11h16v10H4zM2.5 7h19v4h-19zM12 7v14M12 7S10 2.5 7.5 3.5 9 7 12 7ZM12 7s2-4.5 4.5-3.5S15 7 12 7Z',
+  fixed: 'M12 3l2.7 5.8 6.3.8-4.6 4.3 1.2 6.2L12 17l-5.6 3.1 1.2-6.2L3 9.6l6.3-.8Z',
+  trade: 'M4 8h14l-3-3M20 16H6l3 3',
+  roaming: 'M3 8h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 18h6',
+  other: 'M12 17h.01M9.5 9a2.5 2.5 0 1 1 4 2c-1 .7-1.5 1.3-1.5 2.5M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z',
+}
+
+export const EncounterKindIcon = ({ kind, ...props }: IconProps & { kind: string }) => (
+  <Icon {...props}>
+    <path d={ENCOUNTER_KIND_PATHS[kind] ?? ENCOUNTER_KIND_PATHS.other} />
+  </Icon>
+)
+
 export const SearchIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="11" cy="11" r="7" />

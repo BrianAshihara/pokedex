@@ -1,13 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { BaseStatsRadar, StatBars } from '../components/charts'
-import { Alert, Brand, Card, Footer, Skeleton } from '../components/common'
+import { Alert, Brand, Card, Footer, Skeleton, Spinner } from '../components/common'
 import { SegmentedControl, Toggle } from '../components/controls'
 import { DexSearch } from '../components/DexSearch'
 import { EvolutionCard } from '../components/EvolutionCard'
 import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon } from '../components/icons'
-import { LocationsPanel } from '../components/LocationsPanel'
 import { MovesPanel } from '../components/MovesPanel'
 import { PokemonBrowser } from '../components/PokemonBrowser'
 import { AbilitiesCard, Hero, InfoCard, MatchupsCard, type ImageMode } from '../components/pokemon'
@@ -18,6 +17,9 @@ import { getFlavorText, getGenus } from '../lib/pokeapi'
 import { abilitiesQuery, evolutionQuery, matchupsQuery, pokemonQuery, speciesCountQuery, speciesQuery } from '../lib/queries'
 import { baseStats } from '../lib/stats'
 import type { Pokemon, PokemonSprites, Sprites } from '../lib/types'
+
+// Os mapas pesam cerca de 90 KB: só carregam quando a página de um Pokémon abre.
+const LocationsPanel = lazy(() => import('../components/LocationsPanel').then((m) => ({ default: m.LocationsPanel })))
 
 export function DexHeader() {
   const navigate = useNavigate()
@@ -245,7 +247,9 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
 
       <MovesPanel key={pokemon.name} pokemon={pokemon} versionGroup={versionGroup} onVersionGroupChange={setVersionGroup} />
 
-      <LocationsPanel key={`locations-${pokemon.name}`} pokemon={pokemon} species={species} />
+      <Suspense fallback={<section className="panel"><Spinner label={t.locations.loading} /></section>}>
+        <LocationsPanel key={`locations-${pokemon.name}`} pokemon={pokemon} species={species} />
+      </Suspense>
     </>
   )
 }

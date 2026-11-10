@@ -4,6 +4,7 @@ import { curatedEncounters, groupEncounters } from './encounters'
 import hiddenItemCategories from './hidden-item-categories.json'
 import { groupFlavorTexts, itemGroup, itemVariant, megaStoneUser } from './items'
 import type {
+  AreaInfo,
   Ability,
   AbilityData,
   ChainLink,
@@ -693,7 +694,7 @@ const AREA_NAMES_QUERY = `query ($areas: [String!]!) {
   locationarea(where: { name: { _in: $areas } }) {
     name
     locationareanames(where: { language: { name: { _eq: "en" } } }) { name }
-    location { locationnames(where: { language: { name: { _eq: "en" } } }) { name } }
+    location { name locationnames(where: { language: { name: { _eq: "en" } } }) { name } }
   }
 }`
 
@@ -701,19 +702,24 @@ interface AreaNamesResponse {
   locationarea: {
     name: string
     locationareanames: { name: string }[]
-    location: { locationnames: { name: string }[] } | null
+    location: { name: string; locationnames: { name: string }[] } | null
   }[]
 }
 
-async function getAreaNames(areas: string[]): Promise<Map<string, string>> {
+// Algumas áreas vêm como "Road 22" em vez de "Route 22".
+const fixRouteName = (name: string) => name.replace(/^Road (\d)/, 'Route $1')
+
+async function getAreaNames(areas: string[]): Promise<Map<string, AreaInfo>> {
   if (!areas.length) return new Map()
   try {
     const data = await graphql<AreaNamesResponse>(AREA_NAMES_QUERY, { areas })
     return new Map(
       data.locationarea.flatMap((area) => {
-        const name = area.locationareanames[0]?.name || area.location?.locationnames[0]?.name
-        // Algumas áreas vêm como "Road 22" em vez de "Route 22".
-        return name ? [[area.name, name.replace(/^Road (\d)/, 'Route $1')] as [string, string]] : []
+        const place = area.location?.locationnames[0]?.name
+        const name = area.locationareanames[0]?.name || place
+        if (!name) return []
+        const info: AreaInfo = { name: fixRouteName(name), location: area.location?.name, place: place && fixRouteName(place) }
+        return [[area.name, info] as [string, AreaInfo]]
       }),
     )
   } catch {

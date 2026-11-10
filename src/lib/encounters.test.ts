@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { pt } from '../i18n/pt'
-import { addPreEvolutions, conditionLabel, curatedEncounters, gameLabel, groupEncounters } from './encounters'
+import { addPreEvolutions, conditionLabel, curatedEncounters, encounterKind, gameLabel, groupEncounters, groupPlaces, rarityOf } from './encounters'
+import { gridRuns, layoutTownLabels } from './illustrated-map'
+import { findOnMap } from './region-maps'
 import type { RawEncounterArea } from './types'
 
 const resource = (name: string) => ({ name, url: '' })
@@ -39,7 +41,7 @@ describe('groupEncounters', () => {
   })
 
   it('junta jogos vizinhos idênticos e mantém a ordem de lançamento', () => {
-    const games = groupEncounters([area('a', ['sword', 'blue', 'red'], [['walk', 2, 2, 10]])], new Map([['a', 'Área A']]))
+    const games = groupEncounters([area('a', ['sword', 'blue', 'red'], [['walk', 2, 2, 10]])], new Map([['a', { name: 'Área A' }]]))
     expect(games.map((g) => g.versions)).toEqual([['red', 'blue', 'sword']])
     expect(games[0].rows[0].areaName).toBe('Área A')
   })
@@ -90,6 +92,85 @@ describe('addPreEvolutions', () => {
   it('acumula pré-evoluções no mesmo jogo, da mais próxima para a mais distante', () => {
     const [only] = addPreEvolutions([], [{ species: 'ivysaur', games: [game(['x'], 'I')] }, { species: 'bulbasaur', games: [game(['x'], 'B')] }])
     expect(only.rows.map((r) => r.via)).toEqual(['ivysaur', 'bulbasaur'])
+  })
+})
+
+describe('encounterKind', () => {
+  it('distingue grama de interiores pelo nome do local', () => {
+    expect(encounterKind('walk', 'Route 1')).toBe('grass')
+    expect(encounterKind('walk', 'Mt. Moon')).toBe('cave')
+    expect(encounterKind('walk', 'Slowpoke Well')).toBe('cave')
+    expect(encounterKind('walk', 'Viridian Forest')).toBe('grass')
+  })
+
+  it('classifica pesca, água e presentes', () => {
+    expect(encounterKind('super-rod', 'Route 1')).toBe('fishing')
+    expect(encounterKind('surf', 'Route 1')).toBe('water')
+    expect(encounterKind('roaming-water', null)).toBe('roaming')
+    expect(encounterKind('gift', 'Cabo Poco')).toBe('gift')
+  })
+})
+
+describe('rarityOf', () => {
+  it('usa faixas de chance e trata presentes como garantidos', () => {
+    expect(rarityOf({ method: 'walk', chance: 30 })).toBe('common')
+    expect(rarityOf({ method: 'walk', chance: 10 })).toBe('uncommon')
+    expect(rarityOf({ method: 'walk', chance: 4 })).toBe('rare')
+    expect(rarityOf({ method: 'walk', chance: 1 })).toBe('veryRare')
+    expect(rarityOf({ method: 'gift', chance: null })).toBe('guaranteed')
+    expect(rarityOf({ method: 'event', chance: null })).toBeNull()
+  })
+})
+
+describe('groupPlaces', () => {
+  const row = (areaName: string, chance: number | null, location?: string, place?: string, method = 'walk') => ({ areaName, location, place, method, minLevel: 1, maxLevel: 1, chance, conditions: [] })
+
+  it('junta andares do mesmo local e ordena do mais fácil ao mais difícil', () => {
+    const places = groupPlaces([row('Route 1', 5, 'r1', 'Route 1'), row('Cave (1F)', 10, 'c', 'Cave'), row('Cave (2F)', 40, 'c', 'Cave')])
+    expect(places.map((p) => p.key)).toEqual(['c', 'r1'])
+    expect(places[0].rows).toEqual([expect.objectContaining({ chance: 40, subAreas: ['1F', '2F'] })])
+  })
+
+  it('mantém separados métodos e condições diferentes no mesmo local', () => {
+    const places = groupPlaces([row('Cave', 40, 'c', 'Cave'), row('Cave', 10, 'c', 'Cave', 'surf')])
+    expect(places[0].rows.map((r) => r.method)).toEqual(['walk', 'surf'])
+    expect(places[0].rows[0].subAreas).toEqual([])
+  })
+
+  it('coloca encontros garantidos primeiro', () => {
+    expect(groupPlaces([row('A', 90), row('B', null, undefined, undefined, 'gift')])[0].name).toBe('B')
+  })
+})
+
+describe('gridRuns', () => {
+  it('junta as células vizinhas de cada linha', () => {
+    expect(gridRuns(40, 20, 10, (x, y) => y < 10 && x > 10)).toEqual([{ x: 10, y: 0, width: 30 }])
+  })
+})
+
+describe('layoutTownLabels', () => {
+  const town = (slug: string, x: number) => ({ slug, name: 'Goldenrod City', kind: 'town' as const, x, y: 100, r: 30 })
+
+  it('sobe o nome quando a vizinha já ocupa o espaço de baixo', () => {
+    expect(layoutTownLabels([town('a', 100), town('b', 150)], null).map((l) => l.y)).toEqual([146, 68])
+  })
+
+  it('não coloca nomes atrás do marcador', () => {
+    expect(layoutTownLabels([town('a', 100)], { ...town('p', 100), y: 150 }).map((l) => l.y)).toEqual([68])
+  })
+})
+
+describe('findOnMap', () => {
+  it('acha locais direto e por apelido', () => {
+    expect(findOnMap('pallet-town')).toEqual({ mapId: 'kanto', slug: 'pallet-town' })
+    expect(findOnMap('kanto-victory-road-2')).toEqual({ mapId: 'kanto', slug: 'kanto-victory-road-1' })
+    expect(findOnMap('galar-route-1')).toEqual({ mapId: 'galar', slug: 'galar-route-1' })
+  })
+
+
+  it('devolve null fora dos mapas', () => {
+    expect(findOnMap('roaming-kanto')).toBeNull()
+    expect(findOnMap(undefined)).toBeNull()
   })
 })
 
