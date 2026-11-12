@@ -1,18 +1,20 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router'
 import { BaseStatsRadar, StatBars } from '../components/charts'
 import { Alert, Brand, Card, Footer, Skeleton, Spinner } from '../components/common'
 import { SegmentedControl, Toggle } from '../components/controls'
 import { DexSearch } from '../components/DexSearch'
 import { EvolutionCard } from '../components/EvolutionCard'
-import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon } from '../components/icons'
+import { ChevronLeftIcon, ChevronRightIcon, DiceIcon, FlaskIcon, QuestionIcon } from '../components/icons'
 import { MovesPanel } from '../components/MovesPanel'
 import { PokemonBrowser } from '../components/PokemonBrowser'
+import { ShareCardButton } from '../components/ShareCard'
+import { SpriteGallery, type SpritePick } from '../components/SpriteGallery'
 import { AbilitiesCard, Hero, InfoCard, MatchupsCard, type ImageMode } from '../components/pokemon'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { useI18n } from '../i18n/I18nProvider'
-import { accentColor, dexNumber, displayName } from '../lib/format'
+import { accentColor, dexNumber, displayName, typeNames } from '../lib/format'
 import { getFlavorText, getGenus } from '../lib/pokeapi'
 import { abilitiesQuery, evolutionQuery, matchupsQuery, pokemonQuery, speciesCountQuery, speciesQuery } from '../lib/queries'
 import { baseStats } from '../lib/stats'
@@ -34,10 +36,16 @@ export function DexHeader() {
     <div className="page-header">
       <Brand />
       <DexSearch />
-      <button type="button" className="btn primary block" onClick={goRandom} disabled={!speciesCount}>
-        <DiceIcon />
-        {t.search.random}
-      </button>
+      <div className="header-actions">
+        <button type="button" className="btn primary block" onClick={goRandom} disabled={!speciesCount}>
+          <DiceIcon />
+          {t.search.random}
+        </button>
+        <Link className="btn block game-link" to="/quem-e-esse" title={t.game.title}>
+          <QuestionIcon />
+          {t.game.open}
+        </Link>
+      </div>
     </div>
   )
 }
@@ -148,6 +156,9 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
   const { t } = useI18n()
   const [imageMode, setImageMode] = usePersistentState<ImageMode>('pokedex:image-mode', 'art')
   const [shiny, setShiny] = usePersistentState('pokedex:shiny', false)
+  // Sprite escolhido na galeria; vale só para o Pokémon em que foi escolhido.
+  const [pick, setPick] = useState<(SpritePick & { pokemon: string }) | null>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
   const [versionGroup, setVersionGroup] = usePersistentState<string | null>('pokedex:version-group', null)
 
   const speciesName = pokemon.species.name
@@ -159,15 +170,52 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
 
   const accent = accentColor(pokemon)
   const varieties = species?.varieties.map((v) => v.pokemon.name) ?? []
-  const [imageUrl, shownMode] = pickImage(pokemon.sprites, imageMode, shiny)
+  const activePick = pick?.pokemon === pokemon.name ? pick : null
+  const [imageUrl, shownMode] = activePick ? [activePick.url, activePick.mode] : pickImage(pokemon.sprites, imageMode, shiny)
   const cry = pokemon.cries?.latest || pokemon.cries?.legacy
   const stats = pokemon.stats.length ? baseStats(pokemon) : null
   const apiSlow = <Alert>{t.pokemon.apiSlow}</Alert>
+  const shareData = {
+    name: displayName(pokemon.name),
+    dexNumber: dexNumber(species?.id ?? pokemon.id),
+    genus: getGenus(species),
+    types: typeNames(pokemon),
+    imageUrl,
+    pixelated: shownMode !== 'art',
+    tags: [
+      species?.is_legendary ? t.pokemon.legendary : species?.is_mythical ? t.pokemon.mythical : species?.is_baby ? t.pokemon.baby : '',
+      shiny && !activePick ? 'Shiny' : '',
+    ].filter(Boolean),
+    stats,
+    abilities: (abilities.data ?? []).map((a) => ({ name: a.name, hidden: a.hidden })),
+    hiddenLabel: t.abilities.hidden,
+    totalLabel: 'Total',
+    footer: `${window.location.host}/pokemon/${pokemon.name}`,
+  }
   const imageModes: { value: ImageMode; label: string }[] = [
     { value: 'art', label: t.pokemon.imageArt },
     { value: 'pixel', label: t.pokemon.imagePixel },
     { value: 'anim', label: t.pokemon.imageAnimated },
   ]
+
+  // Mudar estilo ou shiny volta o card para o padrão.
+  const changeImageMode = (mode: ImageMode) => {
+    setPick(null)
+    setImageMode(mode)
+  }
+  const changeShiny = (value: boolean) => {
+    setPick(null)
+    setShiny(value)
+  }
+  const pickSprite = (sprite: SpritePick) => {
+    setPick({ ...sprite, pokemon: pokemon.name })
+    // A galeria fica bem abaixo do card: rola até ele para o clique ter efeito visível.
+    const hero = heroRef.current
+    if (hero && hero.getBoundingClientRect().top < 0) {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      hero.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+    }
+  }
 
   return (
     <>
@@ -195,15 +243,25 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
       {speciesError && apiSlow}
 
       <div className="dex-grid">
-        <div>
-          <Hero pokemon={pokemon} species={species} genus={getGenus(species)} imageUrl={imageUrl} imageMode={shownMode} shiny={shiny} />
+        <div ref={heroRef}>
+          <Hero pokemon={pokemon} species={species} genus={getGenus(species)} imageUrl={imageUrl} imageMode={shownMode} shiny={shiny} picked={activePick !== null} />
           <div className="hero-controls">
             <div className="hero-controls-row">
-              <SegmentedControl label={t.pokemon.imageStyle} options={imageModes} value={imageMode} onChange={setImageMode} />
-              <Toggle checked={shiny} onChange={setShiny}>
+              <SegmentedControl label={t.pokemon.imageStyle} options={imageModes} value={activePick ? null : imageMode} onChange={changeImageMode} />
+              <Toggle checked={shiny} onChange={changeShiny}>
                 Shiny
               </Toggle>
             </div>
+            {activePick && (
+              <div className="hero-pick">
+                <span className="caption">
+                  {t.sprites.showing} <strong>{activePick.label}</strong>
+                </span>
+                <button type="button" className="btn sm" onClick={() => setPick(null)}>
+                  {t.sprites.reset}
+                </button>
+              </div>
+            )}
             {cry ? (
               <div>
                 <audio key={cry} controls preload="none" src={cry} />
@@ -216,12 +274,13 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
               <FlaskIcon />
               {t.pokemon.openInLab}
             </Link>
+            <ShareCardButton data={shareData} fileName={pokemon.name} />
           </div>
         </div>
 
         <div>
           <InfoCard pokemon={pokemon} species={species} flavor={getFlavorText(species)} accent={accent} />
-          {abilities.data ? <AbilitiesCard abilities={abilities.data} accent={accent} /> : abilities.isError ? apiSlow : <Skeleton height={160} />}
+          {abilities.data ? <AbilitiesCard abilities={abilities.data} accent={accent} pokemonName={pokemon.name} /> : abilities.isError ? apiSlow : <Skeleton height={160} />}
           {matchups.data ? <MatchupsCard key={pokemon.name} matchups={matchups.data} abilities={abilities.data ?? []} accent={accent} /> : matchups.isError ? apiSlow : <Skeleton height={180} />}
         </div>
 
@@ -246,6 +305,8 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
       )}
 
       <MovesPanel key={pokemon.name} pokemon={pokemon} versionGroup={versionGroup} onVersionGroupChange={setVersionGroup} />
+
+      <SpriteGallery gallery={pokemon.gallery} shiny={shiny} onShinyChange={changeShiny} selectedUrl={activePick?.url ?? null} onSelect={pickSprite} />
 
       <Suspense fallback={<section className="panel"><Spinner label={t.locations.loading} /></section>}>
         <LocationsPanel key={`locations-${pokemon.name}`} pokemon={pokemon} species={species} />

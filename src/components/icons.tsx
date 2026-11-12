@@ -23,6 +23,28 @@ export const FlaskIcon = (props: IconProps) => (
   </Icon>
 )
 
+export const SparkIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" />
+    <path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z" />
+  </Icon>
+)
+
+export const QuestionIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.6 9.2a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.9" />
+    <circle cx="12" cy="17" r="0.6" fill="currentColor" />
+  </Icon>
+)
+
+export const ShareIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 15V3M8 7l4-4 4 4" />
+    <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+  </Icon>
+)
+
 export const BagIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M6 8h12l1.2 11.2A1.6 1.6 0 0 1 17.6 21H6.4a1.6 1.6 0 0 1-1.6-1.8L6 8Z" />

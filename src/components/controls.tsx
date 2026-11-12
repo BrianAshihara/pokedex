@@ -15,7 +15,8 @@ export function SegmentedControl<T extends string>({
   label,
 }: {
   options: Option<T>[]
-  value: T
+  /** null = nenhuma opção marcada (ex.: o card mostra um sprite escolhido na galeria). */
+  value: T | null
   onChange: (value: T) => void
   label: string
 }) {

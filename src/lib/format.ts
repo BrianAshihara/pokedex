@@ -97,6 +97,14 @@ export function generationLabel(generation: number): string {
   return ROMAN[generation] ?? String(generation)
 }
 
+/** Valor de `?de=` quando a página da habilidade foi aberta pela lista de Habilidades. */
+export const FROM_ABILITY_LIST = 'habilidades'
+
+/** `from` é o Pokémon de origem (ou a lista), usado pelo botão "Voltar" da página da habilidade. */
+export function abilityLink(slug: string, from?: string): string {
+  return `/habilidade/${slug}` + (from ? `?de=${encodeURIComponent(from)}` : '')
+}
+
 export function moveLink(slug: string, versionGroup?: string, from?: string): string {
   const params = new URLSearchParams()
   if (versionGroup) params.set('jogo', versionGroup)

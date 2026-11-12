@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/pokedex.png" alt="Tela do Dexpedition mostrando o Charizard: menu do topo com seletor de idioma, busca, card com arte oficial, dados da Pokédex com descrição em português, habilidades, dano recebido, hexágono de atributos base e cadeia de evolução" width="90%">
+  <img src="assets/pokedex.png" alt="Tela do Dexpedition mostrando o Charizard: menu do topo com as abas e o seletor de idioma, busca, botões Aleatório e Quem é esse?, card com arte oficial e botão de compartilhar imagem, dados da Pokédex com descrição em português, habilidades, dano recebido, hexágono de atributos base e cadeia de evolução" width="90%">
 </p>
 
 ## Sumário
@@ -30,7 +30,7 @@
 
 ## Visão geral
 
-O projeto reúne em uma única tela as informações mais consultadas sobre um Pokémon: tipos, atributos base, fraquezas e resistências, habilidades, formas alternativas e a cadeia de evolução completa. Além da ficha de cada Pokémon, há uma lista navegável de todos os Pokémon, uma seção de golpes que mostra quem aprende cada um e um laboratório com calculadora e comparador de atributos. A interface segue a linguagem visual dos jogos da série principal, com layout em colunas no desktop e empilhado em telas menores.
+O projeto reúne em uma única tela as informações mais consultadas sobre um Pokémon: tipos, atributos base, fraquezas e resistências, habilidades, formas alternativas, a cadeia de evolução completa e todos os sprites de todos os jogos. Além da ficha de cada Pokémon, há uma lista navegável de todos os Pokémon, seções de golpes, habilidades e itens que mostram quem aprende, tem ou usa cada um, um laboratório com calculadora e comparador de atributos e o minijogo "Quem é esse Pokémon?". A interface segue a linguagem visual dos jogos da série principal, com layout em colunas no desktop e empilhado em telas menores.
 
 A aplicação roda inteiramente no navegador: não há backend, e todos os dados vêm direto da PokeAPI.
 
@@ -41,24 +41,40 @@ A aplicação roda inteiramente no navegador: não há backend, e todos os dados
 - Busca por nome ou número da Pokédex nacional, tolerante a espaços, pontuação e acentos (`mr mime`, `deoxys`, `25`, `flabébé`), com sugestões enquanto você digita: sprite, número e tipos de cada Pokémon, navegação pelo teclado e tolerância a pequenos erros (`chrzd` → Charizard).
 - Navegação sequencial pela numeração nacional, exibindo o nome do Pokémon anterior e do próximo.
 - Sorteio de um Pokémon aleatório entre todas as espécies disponíveis na API.
-- Lista de todos os Pokémon na página inicial, em grade com sprite, número e tipos. Filtra por nome, por até dois tipos (ex.: Fire + Flying) e por geração (ou só os disponíveis em Pokémon Champions), e ordena por número, nome, total ou um atributo específico (ex.: os mais rápidos). Formas alternativas aparecem com um clique.
+- Minijogo "Quem é esse Pokémon?" a um clique, ao lado do sorteio (veja abaixo).
+- Lista de todos os Pokémon na página inicial, em grade com sprite, número e tipos. Filtra por nome, por até dois tipos (ex.: Fire + Flying), por geração (ou só os disponíveis em Pokémon Champions) e por habilidade (ex.: quem pode ter Intimidate, marcando quando ela é oculta), e ordena por número, nome, total ou um atributo específico (ex.: os mais rápidos). Formas alternativas aparecem com um clique.
 - URLs próprias para cada Pokémon (`/pokemon/charizard`), permitindo compartilhar links e usar o histórico do navegador. Links antigos no formato `?p=charizard` continuam funcionando.
 
 ### Informações exibidas
 
 | Seção | Conteúdo |
 | --- | --- |
-| Card principal | Arte oficial, sprite em pixel ou animado, versão shiny, grito do Pokémon, tipos, categoria e marcação de lendário, mítico ou bebê |
+| Card principal | Arte oficial, sprite em pixel ou animado, versão shiny, grito do Pokémon, tipos, categoria e marcação de lendário, mítico ou bebê. Gera uma imagem para compartilhar (PNG 1080×1350, no formato dos stories) com arte, tipos, hexágono de atributos e habilidades: no celular abre o menu de compartilhar, no computador baixa o arquivo |
 | Dados da Pokédex | Altura, peso, proporção de gênero, taxa de captura, experiência base, geração e descrição |
-| Habilidades | Habilidades regulares e oculta, com a descrição de cada uma |
+| Habilidades | Habilidades regulares e oculta, com a descrição de cada uma e link para a página da habilidade |
 | Dano recebido | Multiplicadores 4×, 2×, 0.5×, 0.25× e 0× calculados a partir da combinação de tipos. Habilidades que reduzem golpes superefetivos (Filter, Solid Rock e Prism Armor) são detectadas automaticamente e geram as faixas 3× e 1.5×. Quando o Pokémon tem outras habilidades, um seletor alterna entre elas |
 | Atributos base | Hexágono no estilo de Sword/Shield, barras por faixa de valor e mínimo/máximo no nível 100 |
 | Formas alternativas | Mega, Gigantamax, formas regionais e demais variedades da espécie |
 | Evolução | Árvore completa com ramificações (ex.: Eevee, Wurmple), métodos de evolução e links para cada estágio |
 | Onde encontrar | Mapa ilustrado de cada região (Kanto a Galar, mais Orre e Sevii Islands), desenhado para o projeto, com os locais destacados e cartões que explicam, em linguagem simples, como achar o Pokémon: ação, nível, raridade e condições, do lugar mais fácil ao mais difícil (dados da PokeAPI até Sword/Shield). Em jogos onde o Pokémon só vem por evolução, mostra o local da pré-evolução. Iniciais, lendários e míticos sem registro têm dados curados à mão |
 | Golpes | Golpes aprendidos por nível, ovo, MT e tutor em cada jogo, com tipo, categoria, poder, precisão, PP e efeito. Cada golpe abre a página dele |
+| Sprites | Todos os sprites que a PokeAPI tem para o Pokémon (mais de 200 no Pikachu), em abas por geração: arte oficial, HOME, Dream World, Showdown e cada jogo, de Red/Green a Champions, com as variantes cinza, GBC, sem fundo, animada e ícone. Filtros de frente/costas, shiny e fêmea (só quando há diferença). A aba "Linha do tempo" mostra um sprite por geração lado a lado. Clicar em um sprite o leva para o card principal |
 
-As preferências de exibição (estilo da imagem, shiny e jogo selecionado nos golpes) ficam salvas no navegador.
+As preferências de exibição (estilo da imagem, shiny, jogo selecionado nos golpes e aba da galeria de sprites) ficam salvas no navegador.
+
+<p align="center">
+  <img src="assets/sprites.png" alt="Galeria de sprites do Charizard na aba Linha do tempo: um sprite por geração, de Red/Green até Scarlet/Violet" width="90%">
+</p>
+
+<p align="center">
+  <img src="assets/sprites-gen1.png" alt="Aba Gen I da galeria do Pikachu: arte oficial de Red/Blue e Red/Green e os sprites de Red/Green, Red/Blue e Yellow nas variantes padrão, sem fundo, cinza e cores do GBC" width="90%">
+</p>
+
+A imagem para compartilhar usa o que o card está mostrando no momento (arte, pixel, shiny ou um sprite escolhido na galeria):
+
+<p align="center">
+  <img src="assets/compartilhar.png" alt="Imagem de compartilhamento do Charizard: número, arte oficial, nome, categoria, tipos, hexágono e barras de atributos, habilidades e o endereço da página" width="40%">
+</p>
 
 ### Golpes
 
@@ -70,12 +86,36 @@ Seção própria (`/golpes`), acessível pelo menu no topo.
 
 Os filtros das listas ficam na URL, então voltar pelo navegador ou compartilhar o link mantém a lista exatamente como estava.
 
+### Habilidades
+
+Seção própria (`/habilidades`), acessível pelo menu no topo.
+
+- **Lista de habilidades**: todas as habilidades da série principal, com busca por nome, filtro de geração e colunas ordenáveis (ex.: as mais comuns primeiro).
+- **Página da habilidade** (`/habilidade/intimidate`): descrição, geração em que surgiu e todos os Pokémon que podem tê-la, separados entre comum e oculta, com busca e opção de incluir formas alternativas.
+- **Botão de voltar contextual**, como nos golpes: volta ao Pokémon de origem ou à lista com os mesmos filtros.
+
+<p align="center">
+  <img src="assets/habilidade.png" alt="Página da habilidade Intimidate: descrição, geração em que surgiu e a grade de Pokémon que podem tê-la, com filtros Todas, Comum e Oculta" width="90%">
+</p>
+
 ### Itens
 
 Seção própria (`/itens`), acessível pelo menu no topo.
 
 - **Lista de itens**: cerca de 1.100 itens com busca por nome, filtros de categoria, geração e só os de Pokémon Champions, e colunas ordenáveis. Ficam de fora MTs (já cobertas em Golpes), cristais Dynamax, materiais de MT, ingredientes de sanduíche e itens sem uso nos jogos.
 - **Página do item** (`/item/leftovers`): descrição, categoria, geração, preço, características, efeito com o golpe Fling, texto em cada jogo, itens parecidos e os Pokémon relacionados: quem Mega Evolui com ele, quem evolui usando ele e quais Pokémon selvagens podem segurá-lo.
+
+### Quem é esse Pokémon?
+
+Minijogo (`/quem-e-esse`), aberto pelo botão ao lado de "Aleatório".
+
+- A silhueta do Pokémon aparece sobre os raios do desenho animado; digite o nome em até três tentativas, com sugestões e tolerância a pequenos erros de digitação (`grudon` → Groudon). Um palpite que é outro Pokémon nunca vale (`porygon` não acerta Porygon2).
+- Dicas reveladas uma de cada vez: tipo, geração, grito e a primeira letra do nome.
+- Sequência de acertos, recorde salvo no navegador e opção de jogar só com uma geração.
+
+<p align="center">
+  <img src="assets/jogo.png" alt="Minijogo Quem é esse Pokémon? com a silhueta do Gengar sobre raios azuis, um palpite errado (Haunter) e as dicas de tipo e geração reveladas" width="90%">
+</p>
 
 ### Laboratório
 
@@ -116,18 +156,23 @@ O código é dividido em camadas com responsabilidades separadas:
 - **`src/lib/`**: lógica sem dependência de interface.
   - **`pokeapi.ts`**: acesso à PokeAPI. Resolve nomes, busca espécies, tipos, habilidades, golpes e cadeias de evolução, calcula a efetividade de tipos (incluindo o efeito de habilidades) e faz as consultas GraphQL das listas.
   - **`stats.ts`**: regras do jogo: fórmulas de atributos, naturezas e limites de IVs e EVs.
+  - **`sprites.ts`**: transforma o objeto de sprites da PokeAPI (aninhado por geração, jogo e variante) em uma lista simples, agrupada e ordenada para a galeria e a linha do tempo.
+  - **`game.ts`**: regras do "Quem é esse Pokémon?": conferência do palpite com distância de edição e sorteio sem repetir os recentes.
+  - **`share-card.ts`**: desenha a imagem de compartilhamento em canvas, sem biblioteca externa.
+  - **`versions.ts`**: jogos em ordem cronológica com o nome de exibição.
   - **`queries.ts`**: definições das consultas do TanStack Query usadas pelas telas.
   - **`format.ts`** e **`types.ts`**: formatação, cores por tipo e a tipagem dos dados da API.
 - **`src/components/`**: componentes visuais (cards, hexágono de atributos, árvore de evolução, tabela de golpes, lista de Pokémon) e controles reutilizáveis (select pesquisável, abas, slider, toggle, filtro de tipos).
-- **`src/pages/`**: uma página por arquivo (`PokedexPage.tsx`, `MovesListPage.tsx`, `MovePage.tsx` e `LabPage.tsx`), responsáveis pelo layout e pelo estado de cada tela.
+- **`src/pages/`**: uma página por arquivo (Pokémon, golpes, habilidades, itens, laboratório e o minijogo), responsáveis pelo layout e pelo estado de cada tela.
 - **`src/state/`**: estado do Laboratório, compartilhado entre as páginas para não se perder ao navegar.
 - **`src/i18n/`**: dicionários da interface (`pt.ts` é a referência, e `en.ts` é tipado a partir dele, então faltar um texto quebra o build) e as traduções das descrições da PokeAPI.
 
 Decisões de desempenho:
 
 - **Cache em duas camadas**: as respostas da PokeAPI ficam em um cache em memória por URL, que também evita requisições duplicadas simultâneas, e o TanStack Query guarda os dados já processados por uma hora.
-- **Payload reduzido**: a resposta de `/pokemon` é compactada antes de entrar no cache (a lista de golpes, cerca de 90% do tamanho, vira um índice enxuto por jogo).
-- **GraphQL para as listas**: a lista de todos os Pokémon, a de todos os golpes e "quem aprende este golpe" usam a API GraphQL da PokeAPI. Cada uma é uma única consulta de poucas dezenas de KB comprimidos, em vez das centenas de requisições REST que seriam necessárias.
+- **Payload reduzido**: a resposta de `/pokemon` é compactada antes de entrar no cache (a lista de golpes, cerca de 90% do tamanho, vira um índice enxuto por jogo, e os sprites viram uma lista achatada só com as URLs existentes).
+- **Só o necessário**: a galeria carrega apenas as imagens da aba aberta, o filtro de habilidade da página inicial só baixa a lista de habilidades quando é usado e o minijogo já baixa a arte da próxima rodada enquanto você pensa.
+- **GraphQL para as listas**: a lista de todos os Pokémon, a de todos os golpes e habilidades, "quem aprende este golpe", "quem tem esta habilidade" e as espécies do minijogo usam a API GraphQL da PokeAPI. Cada uma é uma única consulta de poucas dezenas de KB comprimidos, em vez das centenas de requisições REST que seriam necessárias.
 - **Listas leves**: os sprites usam carregamento preguiçoso (só os visíveis são baixados), e a filtragem usa `useDeferredValue` para não travar a digitação.
 - **Requisições em paralelo**: tipos, habilidades, golpes, MTs e sprites da evolução são buscados em paralelo, com limite de 16 requisições simultâneas.
 - **Carregamento independente**: cada seção carrega por conta própria com um esqueleto de carregamento, então a tela aparece antes de todos os dados chegarem.
@@ -180,7 +225,7 @@ pokedex/
 │   ├── hooks/                 # Hooks reutilizáveis
 │   ├── i18n/                  # Dicionários PT/EN e traduções das descrições
 │   ├── lib/                   # PokeAPI, fórmulas, formatação, tipos e testes
-│   ├── pages/                 # Pokémon, Golpes e Laboratório
+│   ├── pages/                 # Pokémon, Golpes, Habilidades, Itens, Laboratório e minijogo
 │   ├── state/                 # Estado do Laboratório
 │   ├── styles/
 │   │   └── global.css         # Tema e estilos
@@ -195,7 +240,11 @@ pokedex/
 
 ## Roadmap
 
-- [ ] Autocomplete na busca, com tolerância a erros de digitação
+- [x] Autocomplete na busca, com tolerância a erros de digitação
+- [x] Galeria com todos os sprites e linha do tempo por geração
+- [x] Seção de habilidades
+- [x] Minijogo "Quem é esse Pokémon?"
+- [x] Imagem para compartilhar
 - [x] Filtros por tipo, geração e categoria
 - [ ] Montador de time com análise de cobertura de fraquezas
 - [x] Testes automatizados das regras de jogo

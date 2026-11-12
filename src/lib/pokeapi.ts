@@ -3,10 +3,16 @@ import championsItems from '../data/champions-items.json'
 import { curatedEncounters, groupEncounters } from './encounters'
 import hiddenItemCategories from './hidden-item-categories.json'
 import { groupFlavorTexts, itemGroup, itemVariant, megaStoneUser } from './items'
+import type { GameSpecies } from './game'
+import { collectSprites } from './sprites'
+import { sortVersionGroups, titleize } from './versions'
 import type {
   AreaInfo,
   Ability,
   AbilityData,
+  AbilityHolder,
+  AbilityListItem,
+  AbilityPage,
   ChainLink,
   EvolutionChain,
   EvolutionDetail,
@@ -122,6 +128,8 @@ function slimPokemon(data: RawPokemon): Pokemon {
       front_shiny: rest.sprites.front_shiny,
       other: rest.sprites.other,
     },
+    // A galeria guarda só a lista achatada; o objeto bruto de versões não entra no cache.
+    gallery: collectSprites(rest.sprites),
     cries: rest.cries,
     learnset,
   }
@@ -240,7 +248,6 @@ export function getGenus(species: Species | null): string {
   return species?.genera.find((g) => g.language.name === 'en')?.genus ?? ''
 }
 
-const titleize = (text: string) => text.replaceAll('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 
 type EvolutionTexts = Dictionary['evolution']
 
@@ -338,51 +345,7 @@ export async function getEvolutionTree(speciesName: string): Promise<EvolutionTr
   return { tree, sprites }
 }
 
-export const VERSION_GROUPS: [string, string][] = [
-  ['red-green-japan', 'Red / Green (JP)'],
-  ['red-blue', 'Red / Blue'],
-  ['blue-japan', 'Blue (JP)'],
-  ['yellow', 'Yellow'],
-  ['gold-silver', 'Gold / Silver'],
-  ['crystal', 'Crystal'],
-  ['ruby-sapphire', 'Ruby / Sapphire'],
-  ['emerald', 'Emerald'],
-  ['firered-leafgreen', 'FireRed / LeafGreen'],
-  ['colosseum', 'Colosseum'],
-  ['xd', 'XD'],
-  ['diamond-pearl', 'Diamond / Pearl'],
-  ['platinum', 'Platinum'],
-  ['heartgold-soulsilver', 'HeartGold / SoulSilver'],
-  ['black-white', 'Black / White'],
-  ['black-2-white-2', 'Black 2 / White 2'],
-  ['x-y', 'X / Y'],
-  ['omega-ruby-alpha-sapphire', 'Omega Ruby / Alpha Sapphire'],
-  ['sun-moon', 'Sun / Moon'],
-  ['ultra-sun-ultra-moon', 'Ultra Sun / Ultra Moon'],
-  ['lets-go-pikachu-lets-go-eevee', "Let's Go Pikachu / Eevee"],
-  ['sword-shield', 'Sword / Shield'],
-  ['the-isle-of-armor', 'The Isle of Armor'],
-  ['the-crown-tundra', 'The Crown Tundra'],
-  ['brilliant-diamond-shining-pearl', 'Brilliant Diamond / Shining Pearl'],
-  ['legends-arceus', 'Legends: Arceus'],
-  ['scarlet-violet', 'Scarlet / Violet'],
-  ['the-teal-mask', 'The Teal Mask'],
-  ['the-indigo-disk', 'The Indigo Disk'],
-  ['legends-za', 'Legends: Z-A'],
-  ['mega-dimension', 'Mega Dimension'],
-  ['champions', 'Champions'],
-]
-const VERSION_ORDER = new Map(VERSION_GROUPS.map(([name], i) => [name, i]))
-const VERSION_LABELS = new Map(VERSION_GROUPS)
-
-export function versionGroupLabel(name: string): string {
-  return VERSION_LABELS.get(name) ?? titleize(name)
-}
-
-export function sortVersionGroups(names: string[]): string[] {
-  const order = (vg: string) => VERSION_ORDER.get(vg) ?? VERSION_ORDER.size
-  return [...names].sort((a, b) => order(a) - order(b) || a.localeCompare(b))
-}
+export { sortVersionGroups, VERSION_GROUPS, versionGroupLabel } from './versions'
 
 export function sortedVersionGroups(learnset: Learnset): string[] {
   return sortVersionGroups(Object.keys(learnset))
@@ -635,6 +598,118 @@ export async function getAllMoves(): Promise<MoveListItem[]> {
     }
   })
 }
+
+// Habilidades: a lista inteira e "quem tem esta habilidade" saem do GraphQL em uma consulta cada.
+
+const EN = '(where: { language: { name: { _eq: "en" } } })'
+const ABILITY_FIELDS = `
+  name
+  generation_id
+  abilitynames${EN} { name }
+  abilityeffecttexts${EN} { short_effect }
+  abilityflavortexts(where: { language: { name: { _eq: "en" } } }, order_by: { version_group_id: desc }, limit: 1) { flavor_text }
+  pokemonabilities_aggregate(where: { pokemon: { is_default: { _eq: true } } }) { aggregate { count } }`
+
+interface RawAbility {
+  name: string
+  generation_id: number | null
+  abilitynames: { name: string }[]
+  abilityeffecttexts: { short_effect: string }[]
+  abilityflavortexts: { flavor_text: string }[]
+  pokemonabilities_aggregate: { aggregate: { count: number } | null }
+}
+
+function toAbilityItem(a: RawAbility): AbilityListItem {
+  return {
+    slug: a.name,
+    name: a.abilitynames[0]?.name || titleize(a.name),
+    generation: a.generation_id ?? 0,
+    // Mesma escolha do card de Habilidades (REST), para a tradução por slug valer nos dois lugares.
+    description: cleanText(a.abilityflavortexts[0]?.flavor_text || a.abilityeffecttexts[0]?.short_effect || ''),
+    count: a.pokemonabilities_aggregate.aggregate?.count ?? 0,
+  }
+}
+
+const ALL_ABILITIES_QUERY = `{
+  ability(where: { is_main_series: { _eq: true } }, order_by: { name: asc }) {${ABILITY_FIELDS}
+  }
+}`
+
+export async function getAllAbilities(): Promise<AbilityListItem[]> {
+  const data = await graphql<{ ability: RawAbility[] }>(ALL_ABILITIES_QUERY, {})
+  // Habilidades sem nenhum Pokémon (só de formas de batalha ou ainda sem dados) não ajudam na lista.
+  return data.ability.map(toAbilityItem).filter((a) => a.count > 0)
+}
+
+const ABILITY_PAGE_QUERY = `query ($slug: String!) {
+  ability(where: { name: { _eq: $slug } }) {${ABILITY_FIELDS}
+    pokemonabilities {
+      is_hidden
+      pokemon {
+        id
+        name
+        is_default
+        pokemon_species_id
+        pokemontypes(order_by: { slot: asc }) { type { name } }
+      }
+    }
+  }
+}`
+
+interface AbilityPageResponse {
+  ability: (RawAbility & {
+    pokemonabilities: {
+      is_hidden: boolean
+      pokemon: { id: number; name: string; is_default: boolean; pokemon_species_id: number; pokemontypes: { type: { name: string } }[] }
+    }[]
+  })[]
+}
+
+export async function getAbilityPage(slug: string): Promise<AbilityPage | null> {
+  const data = await graphql<AbilityPageResponse>(ABILITY_PAGE_QUERY, { slug })
+  const raw = data.ability[0]
+  if (!raw) return null
+  const holders: AbilityHolder[] = raw.pokemonabilities
+    .map(({ is_hidden, pokemon: p }) => ({
+      name: p.name,
+      id: p.id,
+      speciesId: p.pokemon_species_id,
+      isDefault: p.is_default,
+      types: p.pokemontypes.map((t) => t.type.name),
+      sprite: spriteUrl(p.id),
+      hidden: is_hidden,
+    }))
+    .sort((a, b) => a.speciesId - b.speciesId || a.id - b.id)
+  return { ability: toAbilityItem(raw), holders }
+}
+
+// "Quem é esse Pokémon?": só espécies (formas alternativas ficariam injustas de adivinhar pela silhueta).
+const GAME_SPECIES_QUERY = `{
+  pokemonspecies(order_by: { id: asc }) {
+    id
+    name
+    generation_id
+    pokemons(where: { is_default: { _eq: true } }) { id pokemontypes(order_by: { slot: asc }) { type { name } } }
+  }
+}`
+
+interface GameSpeciesResponse {
+  pokemonspecies: { id: number; name: string; generation_id: number | null; pokemons: { id: number; pokemontypes: { type: { name: string } }[] }[] }[]
+}
+
+export async function getGameSpecies(): Promise<GameSpecies[]> {
+  const data = await graphql<GameSpeciesResponse>(GAME_SPECIES_QUERY, {})
+  return data.pokemonspecies.map((s) => ({
+    id: s.id,
+    name: s.name,
+    generation: s.generation_id ?? 0,
+    pokemonId: s.pokemons[0]?.id ?? s.id,
+    types: s.pokemons[0]?.pokemontypes.map((t) => t.type.name) ?? [],
+  }))
+}
+
+export const artworkUrl = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+export const cryUrl = (id: number) => `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${id}.ogg`
 
 // Sprite pelo id: dispensa trazer o JSON de sprites de 1300 Pokémon na consulta.
 export const spriteUrl = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`

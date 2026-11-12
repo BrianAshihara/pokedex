@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { useDeferredValue, useMemo } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useI18n } from '../i18n/I18nProvider'
-import { generationLabel, TYPE_COLORS } from '../lib/format'
-import { allPokemonQuery } from '../lib/queries'
+import { displayName, generationLabel, TYPE_COLORS } from '../lib/format'
+import { abilityPageQuery, allAbilitiesQuery, allPokemonQuery } from '../lib/queries'
 import { STATS } from '../lib/stats'
 import type { PokemonListItem } from '../lib/types'
 import { Alert, Spinner } from './common'
-import { Toggle, TypeFilter } from './controls'
+import { Combobox, Toggle, TypeFilter } from './controls'
 import { useSearchField } from '../hooks/useSearchField'
 import { PokemonCard } from './PokemonCard'
 
@@ -39,6 +39,17 @@ export function PokemonBrowser() {
   const generation = Number(generationParam) || 0
   const sort = SORTS.find((s) => s.value === params.get('ordem')) ?? SORTS[0]
   const showForms = params.get('formas') === '1'
+  const ability = params.get('hab') ?? ''
+
+  // A lista de habilidades só é baixada quando o filtro é usado (ou já vem no link).
+  const [wantAbilities, setWantAbilities] = useState(false)
+  const abilities = useQuery({ ...allAbilitiesQuery(), enabled: wantAbilities || !!ability })
+  const holders = useQuery({ ...abilityPageQuery(ability), enabled: !!ability })
+  const abilityOptions = useMemo(() => ['', ...(abilities.data?.map((a) => a.slug) ?? [])], [abilities.data])
+  const abilityNames = useMemo(() => new Map(abilities.data?.map((a) => [a.slug, a.name])), [abilities.data])
+  const abilityLabel = (slug: string) => (slug ? (abilityNames.get(slug) ?? displayName(slug)) : t.browser.anyAbility)
+  // nome do Pokémon → é a habilidade oculta dele?
+  const holderMap = useMemo(() => new Map(holders.data?.holders.map((h) => [h.name, h.hidden])), [holders.data])
 
   const update = (changes: Record<string, string>) => {
     setParams(
@@ -67,7 +78,7 @@ export function PokemonBrowser() {
 
   const clearFilters = () => {
     setQuery('')
-    update({ q: '', tipo: '', ger: '' })
+    update({ q: '', tipo: '', ger: '', hab: '' })
   }
 
   const deferredQuery = useDeferredValue(query)
@@ -83,7 +94,8 @@ export function PokemonBrowser() {
         (!q || p.name.includes(q.replaceAll(' ', '-')) || String(p.speciesId) === q) &&
         selectedTypes.every((t) => p.types.includes(t)) &&
         (!generation || p.generation === generation) &&
-        (!championsOnly || p.champions),
+        (!championsOnly || p.champions) &&
+        (!ability || holderMap.has(p.name)),
     )
     // Já vem por número; o sort é estável, então empates mantêm a ordem da Pokédex.
     if (sort.value === 'nome') return [...filtered].sort((a, b) => a.name.localeCompare(b.name))
@@ -92,12 +104,16 @@ export function PokemonBrowser() {
       return [...filtered].sort((a, b) => key(b) - key(a))
     }
     return filtered
-  }, [data, deferredQuery, selectedTypes, generation, championsOnly, sort, showForms])
+  }, [data, deferredQuery, selectedTypes, generation, championsOnly, sort, showForms, ability, holderMap])
 
   if (isError) return <Alert>{t.browser.loadError}</Alert>
   if (isPending) return <Spinner label={t.browser.loading} />
 
-  const hasFilters = !!(query || selectedTypes.length || generationParam)
+  const hasFilters = !!(query || selectedTypes.length || generationParam || ability)
+  const note = (p: PokemonListItem) => {
+    const parts = [sort.key ? `${sortLabel(sort)} ${sort.key(p)}` : '', ability && holderMap.get(p.name) ? t.browser.hiddenAbility : '']
+    return parts.filter(Boolean).join(' · ') || undefined
+  }
 
   return (
     <>
@@ -119,6 +135,16 @@ export function PokemonBrowser() {
             </option>
           ))}
         </select>
+        <div className="pb-ability" onFocus={() => setWantAbilities(true)}>
+          <Combobox
+            label={t.browser.abilityFilter}
+            placeholder={t.browser.abilityFilter}
+            options={abilityOptions}
+            value={ability || null}
+            onChange={(hab) => update({ hab })}
+            getLabel={abilityLabel}
+          />
+        </div>
       </div>
       <TypeFilter types={types} selected={selectedTypes} onToggle={toggleType} />
       <div className="ml-count">
@@ -134,10 +160,14 @@ export function PokemonBrowser() {
           </Toggle>
         </span>
       </div>
-      {rows.length ? (
+      {ability && holders.isPending ? (
+        <Spinner label={t.browser.abilityLoading} />
+      ) : ability && holders.isError ? (
+        <Alert>{t.common.apiError}</Alert>
+      ) : rows.length ? (
         <div className="learner-grid">
           {rows.map((p) => (
-            <PokemonCard key={p.name} name={p.name} speciesId={p.speciesId} types={p.types} sprite={p.sprite} note={sort.key ? `${sortLabel(sort)} ${sort.key(p)}` : undefined} />
+            <PokemonCard key={p.name} name={p.name} speciesId={p.speciesId} types={p.types} sprite={p.sprite} note={note(p)} />
           ))}
         </div>
       ) : (

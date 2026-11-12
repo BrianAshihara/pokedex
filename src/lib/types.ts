@@ -1,5 +1,7 @@
 // Formato dos dados da PokeAPI (apenas os campos usados pelo app).
 
+import type { SpriteEntry } from './sprites'
+
 export interface NamedResource {
   name: string
   url: string
@@ -44,11 +46,13 @@ export interface Pokemon {
   stats: { base_stat: number; stat: NamedResource }[]
   abilities: { is_hidden: boolean; ability: NamedResource }[]
   sprites: PokemonSprites
+  /** Todos os sprites da PokeAPI (jogos, variantes, especiais), já achatados para a galeria. */
+  gallery: SpriteEntry[]
   cries?: { latest?: string | null; legacy?: string | null }
   learnset: Learnset
 }
 
-export interface RawPokemon extends Omit<Pokemon, 'learnset'> {
+export interface RawPokemon extends Omit<Pokemon, 'learnset' | 'gallery'> {
   moves?: {
     move: NamedResource
     version_group_details: { level_learned_at: number; move_learn_method: NamedResource; version_group: NamedResource }[]
@@ -186,6 +190,33 @@ export interface MoveListItem {
   pp: number | null
   generation: number
   effect: string
+}
+
+/** Linha da lista de habilidades (página /habilidades). */
+export interface AbilityListItem {
+  slug: string
+  name: string
+  generation: number
+  /** Mesmo texto do card de Habilidades (o da Pokédex mais recente ou, sem ele, o efeito curto). */
+  description: string
+  /** Pokémon (formas padrão) que podem ter a habilidade. */
+  count: number
+}
+
+/** Pokémon que pode ter a habilidade, como habilidade comum ou oculta. */
+export interface AbilityHolder {
+  name: string
+  id: number
+  speciesId: number
+  isDefault: boolean
+  types: string[]
+  sprite: string
+  hidden: boolean
+}
+
+export interface AbilityPage {
+  ability: AbilityListItem
+  holders: AbilityHolder[]
 }
 
 export interface LearnedMove extends Move {

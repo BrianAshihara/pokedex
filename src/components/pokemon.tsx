@@ -1,7 +1,8 @@
 import { useState, type CSSProperties } from 'react'
+import { Link } from 'react-router'
 import { useContentText } from '../i18n/content'
 import { useI18n } from '../i18n/I18nProvider'
-import { decimal, dexNumber, displayName, hexToRgba, pokemonArt, typeColor, typeNames } from '../lib/format'
+import { abilityLink, decimal, dexNumber, displayName, hexToRgba, pokemonArt, typeColor, typeNames } from '../lib/format'
 import { applyAbilityToMatchups, SE_REDUCING_ABILITIES } from '../lib/pokeapi'
 import type { Ability, Matchups, Pokemon, Species } from '../lib/types'
 import { Card, TypeBadge } from './common'
@@ -17,9 +18,11 @@ interface HeroProps {
   imageUrl: string | null
   imageMode: ImageMode
   shiny: boolean
+  /** Imagem escolhida na galeria de sprites (pode ter fundo opaco, então não estoura o espaço). */
+  picked?: boolean
 }
 
-export function Hero({ pokemon, species, genus, imageUrl, imageMode, shiny }: HeroProps) {
+export function Hero({ pokemon, species, genus, imageUrl, imageMode, shiny, picked = false }: HeroProps) {
   const types = typeNames(pokemon)
   const c1 = typeColor(types[0])
   const c2 = types[1] ? typeColor(types[1]) : c1
@@ -45,7 +48,7 @@ export function Hero({ pokemon, species, genus, imageUrl, imageMode, shiny }: He
       </div>
       <div className="hero-art">
         {imageUrl ? (
-          <img key={imageUrl} className={imageMode === 'art' ? undefined : imageMode} src={imageUrl} alt={name} />
+          <img key={imageUrl} className={[imageMode === 'art' ? '' : imageMode, picked ? 'picked' : ''].join(' ').trim() || undefined} src={imageUrl} alt={name} />
         ) : (
           <span className="no-art">{t.pokemon.imageUnavailable}</span>
         )}
@@ -107,7 +110,7 @@ export function InfoCard({ pokemon, species, flavor, accent }: { pokemon: Pokemo
   )
 }
 
-export function AbilitiesCard({ abilities, accent }: { abilities: Ability[]; accent: string }) {
+export function AbilitiesCard({ abilities, accent, pokemonName }: { abilities: Ability[]; accent: string; pokemonName: string }) {
   const { t } = useI18n()
   const text = useContentText('abilities')
   return (
@@ -115,10 +118,10 @@ export function AbilitiesCard({ abilities, accent }: { abilities: Ability[]; acc
       {abilities.length === 0 && <span className="muted">{t.abilities.none}</span>}
       {abilities.map((a) => (
         <div key={a.name + a.hidden} className="ability-row">
-          <span className={a.hidden ? 'ability-pill hidden' : 'ability-pill'}>
+          <Link className={a.hidden ? 'ability-pill hidden' : 'ability-pill'} to={abilityLink(a.slug, pokemonName)} title={t.abilities.open(a.name)}>
             {a.name}
             {a.hidden && <small>{t.abilities.hidden}</small>}
-          </span>
+          </Link>
           {a.description && <div className="ability-desc">{text(a.slug, a.description)}</div>}
         </div>
       ))}

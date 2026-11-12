@@ -52,3 +52,9 @@ export const preEvolutionEncountersQuery = (species: Species | null) =>
 export const allItemsQuery = () => queryOptions({ queryKey: ['all-items'], queryFn: api.getAllItems })
 
 export const itemQuery = (slug: string) => queryOptions({ queryKey: ['item', slug], queryFn: () => api.getItem(slug) })
+
+export const allAbilitiesQuery = () => queryOptions({ queryKey: ['all-abilities'], queryFn: api.getAllAbilities })
+
+export const abilityPageQuery = (slug: string) => queryOptions({ queryKey: ['ability-page', slug], queryFn: () => api.getAbilityPage(slug) })
+
+export const gameSpeciesQuery = () => queryOptions({ queryKey: ['game-species'], queryFn: api.getGameSpecies })
