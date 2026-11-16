@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { Alert, Brand, Footer, Spinner, TypeBadge } from '../components/common'
+import { SegmentedControl } from '../components/controls'
 import { usePersistentState } from '../hooks/usePersistentState'
 import { useI18n } from '../i18n/I18nProvider'
 import { displayName, generationLabel } from '../lib/format'
-import { isCorrectGuess, nameMask, pickSpecies, type GameSpecies } from '../lib/game'
-import { artworkUrl, cryUrl, normalizeQuery } from '../lib/pokeapi'
+import { isCorrectGuess, nameMask, pickSpecies, type GameMode, type GameSpecies } from '../lib/game'
+import { artworkUrl, cryUrl, normalizeQuery, spriteUrl } from '../lib/pokeapi'
 import { gameSpeciesQuery } from '../lib/queries'
 
 const MAX_ATTEMPTS = 3
@@ -17,6 +18,17 @@ const RECENT_LIMIT = 30
 const MAX_SUGGESTIONS = 6
 
 type Status = 'playing' | 'won' | 'lost'
+
+const imageUrl = (mode: GameMode, pokemonId: number) => (mode === 'hard' ? spriteUrl(pokemonId) : artworkUrl(pokemonId))
+
+/** Sequência e acertos da sessão, separados por modo (cada modo tem seu recorde). */
+interface Tally {
+  streak: number
+  correct: number
+  played: number
+}
+
+const EMPTY_TALLY: Tally = { streak: 0, correct: 0, played: 0 }
 
 interface Round {
   target: GameSpecies
@@ -46,9 +58,15 @@ function deal(pool: GameSpecies[], recent: number[], upcoming: GameSpecies | nul
 function Game({ species }: { species: GameSpecies[] }) {
   const { t } = useI18n()
   const [generation, setGeneration] = usePersistentState('pokedex:game-gen', 0)
-  const [best, setBest] = usePersistentState('pokedex:game-best', 0)
-  const [streak, setStreak] = useState(0)
-  const [score, setScore] = useState({ correct: 0, played: 0 })
+  const [mode, setMode] = usePersistentState<GameMode>('pokedex:game-mode', 'normal')
+  // O recorde do modo normal mantém a chave antiga para não perder o que já foi salvo.
+  const [bestNormal, setBestNormal] = usePersistentState('pokedex:game-best', 0)
+  const [bestHard, setBestHard] = usePersistentState('pokedex:game-best-hard', 0)
+  const best = mode === 'hard' ? bestHard : bestNormal
+  const setBest = mode === 'hard' ? setBestHard : setBestNormal
+  const [tallies, setTallies] = useState<Record<GameMode, Tally>>({ normal: EMPTY_TALLY, hard: EMPTY_TALLY })
+  const tally = tallies[mode]
+  const setTally = (next: Tally) => setTallies((all) => ({ ...all, [mode]: next }))
   const [guess, setGuess] = useState('')
   const [highlight, setHighlight] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -62,10 +80,10 @@ function Game({ species }: { species: GameSpecies[] }) {
   const { round } = deck
   const setRound = (next: Round) => setDeck((d) => ({ ...d, round: next }))
 
-  // Baixa a arte da próxima rodada para a silhueta aparecer sem atraso.
+  // Baixa a imagem da próxima rodada para a silhueta aparecer sem atraso.
   useEffect(() => {
-    if (deck.upcoming) new Image().src = artworkUrl(deck.upcoming.pokemonId)
-  }, [deck.upcoming])
+    if (deck.upcoming) new Image().src = imageUrl(mode, deck.upcoming.pokemonId)
+  }, [deck.upcoming, mode])
 
   const startNext = (from = pool) => {
     setDeck((d) => deal(from, d.recent, d.upcoming))
@@ -73,12 +91,24 @@ function Game({ species }: { species: GameSpecies[] }) {
     setHighlight(-1)
   }
 
+  /** Trocar de geração ou de modo no meio de uma rodada conta como desistência. */
+  const abandonRound = () => {
+    if (round?.status === 'playing' && round.attempts + round.hints > 0) setTally({ ...tally, streak: 0 })
+  }
+
   const changeGeneration = (value: number) => {
     setGeneration(value)
     const from = species.filter((s) => !value || s.generation === value)
-    // Trocar de geração no meio de uma rodada conta como desistência.
-    if (round?.status === 'playing' && round.attempts + round.hints > 0) setStreak(0)
+    abandonRound()
     startNext(from)
+  }
+
+  // Nova rodada ao trocar de modo: senão daria para ver a arte do mesmo Pokémon e voltar ao difícil.
+  const changeMode = (value: GameMode) => {
+    if (value === mode) return
+    abandonRound()
+    setMode(value)
+    startNext()
   }
 
   useEffect(() => {
@@ -98,9 +128,8 @@ function Game({ species }: { species: GameSpecies[] }) {
 
   const finish = (won: boolean, feedback: string) => {
     setRound({ ...round, status: won ? 'won' : 'lost', feedback, attempts: round.attempts + (won ? 0 : 1) })
-    setScore((s) => ({ correct: s.correct + (won ? 1 : 0), played: s.played + 1 }))
-    const nextStreak = won ? streak + 1 : 0
-    setStreak(nextStreak)
+    const nextStreak = won ? tally.streak + 1 : 0
+    setTally({ streak: nextStreak, correct: tally.correct + (won ? 1 : 0), played: tally.played + 1 })
     if (nextStreak > best) setBest(nextStreak)
   }
 
@@ -135,9 +164,9 @@ function Game({ species }: { species: GameSpecies[] }) {
       <div className={`wtp-stage ${round.status}`}>
         <div className="wtp-rays" aria-hidden="true" />
         <img
-          key={target.id}
-          className={playing ? 'wtp-art hidden' : 'wtp-art'}
-          src={artworkUrl(target.pokemonId)}
+          key={`${mode}-${target.id}`}
+          className={`wtp-art${mode === 'hard' ? ' pixel' : ''}${playing ? ' hidden' : ''}`}
+          src={imageUrl(mode, target.pokemonId)}
           alt={playing ? t.game.silhouette : name}
           draggable={false}
         />
@@ -152,7 +181,7 @@ function Game({ species }: { species: GameSpecies[] }) {
         <dl className="wtp-score">
           <div>
             <dt>{t.game.streak}</dt>
-            <dd>{streak}</dd>
+            <dd>{tally.streak}</dd>
           </div>
           <div>
             <dt>{t.game.best}</dt>
@@ -161,10 +190,24 @@ function Game({ species }: { species: GameSpecies[] }) {
           <div>
             <dt>{t.game.score}</dt>
             <dd>
-              {score.correct}/{score.played}
+              {tally.correct}/{tally.played}
             </dd>
           </div>
         </dl>
+
+        <div className="wtp-gen">
+          <span>{t.game.mode}</span>
+          <SegmentedControl
+            label={t.game.mode}
+            value={mode}
+            onChange={changeMode}
+            options={[
+              { value: 'normal', label: t.game.modeNormal },
+              { value: 'hard', label: t.game.modeHard },
+            ]}
+          />
+          <span className="caption">{mode === 'hard' ? t.game.modeHardHint : t.game.modeNormalHint}</span>
+        </div>
 
         <label className="wtp-gen">
           <span>{t.game.pool}</span>

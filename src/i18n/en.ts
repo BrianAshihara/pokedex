@@ -133,6 +133,11 @@ export const en: Dictionary = {
     best: 'Best',
     score: 'Correct',
     pool: 'Pokémon in play',
+    mode: 'Mode',
+    modeNormal: 'Normal',
+    modeHard: 'Hard',
+    modeNormalHint: 'Silhouette of the official artwork.',
+    modeHardHint: 'Silhouette of the pixel sprite. Separate best streak.',
     suggestions: 'Name suggestions',
   },
 

@@ -2774,6 +2774,13 @@ th[aria-sort] .ml-sort {
   filter: drop-shadow(0 18px 22px rgba(0, 0, 0, 0.45));
   transition: filter 0.6s ease;
 }
+/* Modo difícil: sprite 96×96 ampliado sem suavizar, para manter os pixels. */
+.wtp-art.pixel {
+  width: 92%;
+  height: 92%;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 12px 0 rgba(0, 0, 0, 0.3));
+}
 .wtp-art.hidden {
   filter: brightness(0) drop-shadow(0 0 2px rgba(255, 255, 255, 0.35));
 }

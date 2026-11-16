@@ -137,6 +137,11 @@ export const pt = {
     best: 'Recorde',
     score: 'Acertos',
     pool: 'Pokémon do jogo',
+    mode: 'Modo',
+    modeNormal: 'Normal',
+    modeHard: 'Difícil',
+    modeNormalHint: 'Silhueta da arte oficial.',
+    modeHardHint: 'Silhueta do sprite pixelado. Recorde separado.',
     suggestions: 'Sugestões de nome',
   },
 

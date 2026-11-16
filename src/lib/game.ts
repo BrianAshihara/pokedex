@@ -2,6 +2,9 @@
 
 import { normalizeQuery } from './pokeapi'
 
+/** Normal usa a arte oficial; difícil usa o sprite pixelado (96×96), bem mais ambíguo como silhueta. */
+export type GameMode = 'normal' | 'hard'
+
 export interface GameSpecies {
   /** Número da espécie na Pokédex nacional. */
   id: number
