@@ -6,6 +6,7 @@ import { Alert, Brand, Footer, Skeleton, Spinner } from '../components/common'
 import { Combobox, NumberInput, SegmentedControl, Slider, Tabs, Toast } from '../components/controls'
 import { BlockIcon } from '../components/icons'
 import { MiniPokemon } from '../components/pokemon'
+import { SpeedComparator } from '../components/SpeedComparator'
 import { useI18n } from '../i18n/I18nProvider'
 import { COMPARE_COLORS, displayName } from '../lib/format'
 import { pokemonNamesQuery, pokemonQuery, speciesQuery } from '../lib/queries'
@@ -60,6 +61,7 @@ export function LabPage() {
   const tabs: { value: LabTab; label: string }[] = [
     { value: 'calc', label: t.lab.calculator },
     { value: 'compare', label: t.lab.comparator },
+    { value: 'speed', label: t.lab.speed },
   ]
 
   // "Abrir no Laboratório" chega com ?p=nome: usa esse Pokémon na calculadora e no primeiro slot do comparador.
@@ -89,7 +91,13 @@ export function LabPage() {
 
       <Tabs label={t.lab.toolsLabel} tabs={tabs} active={state.tab} onChange={(tab) => setState((s) => ({ ...s, tab }))} />
 
-      {state.tab === 'calc' ? <Calculator names={names} onPokemonChange={setCalcPokemon} /> : <Comparator names={names} />}
+      {state.tab === 'calc' ? (
+        <Calculator names={names} onPokemonChange={setCalcPokemon} />
+      ) : state.tab === 'compare' ? (
+        <Comparator names={names} />
+      ) : (
+        <SpeedComparator />
+      )}
 
       <Footer />
     </>

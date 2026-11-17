@@ -4,6 +4,7 @@ import { curatedEncounters, groupEncounters } from './encounters'
 import hiddenItemCategories from './hidden-item-categories.json'
 import { groupFlavorTexts, itemGroup, itemVariant, megaStoneUser } from './items'
 import type { GameSpecies } from './game'
+import type { SpeedPokemon } from './speed'
 import { collectSprites } from './sprites'
 import { sortVersionGroups, titleize } from './versions'
 import type {
@@ -713,6 +714,38 @@ export const cryUrl = (id: number) => `https://raw.githubusercontent.com/PokeAPI
 
 // Sprite pelo id: dispensa trazer o JSON de sprites de 1300 Pokémon na consulta.
 export const spriteUrl = (id: number) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+
+// Comparador de Speed: só o elenco do Champions (com Megas), com a Speed base e as habilidades de cada um.
+const SPEED_ROSTER_QUERY = `{
+  pokemon(
+    where: { _or: [{ pokemonmoves: ${CHAMPIONS} }, { is_default: { _eq: true }, pokemonspecy: { pokemondexnumbers: { pokedex: { name: { _eq: "champions" } } } } }] }
+    order_by: { id: asc }
+  ) {
+    id
+    name
+    pokemon_species_id
+    pokemonstats(where: { stat_id: { _eq: 6 } }) { base_stat }
+    pokemonabilities(order_by: { slot: asc }) { ability { name } }
+  }
+}`
+
+interface SpeedRosterResponse {
+  pokemon: { id: number; name: string; pokemon_species_id: number; pokemonstats: { base_stat: number }[]; pokemonabilities: { ability: { name: string } }[] }[]
+}
+
+export async function getSpeedRoster(): Promise<SpeedPokemon[]> {
+  const data = await graphql<SpeedRosterResponse>(SPEED_ROSTER_QUERY, {})
+  return data.pokemon
+    .filter((p) => p.pokemonstats.length)
+    .map((p) => ({
+      name: p.name,
+      id: p.id,
+      speciesId: p.pokemon_species_id,
+      baseSpeed: p.pokemonstats[0].base_stat,
+      abilities: [...new Set(p.pokemonabilities.map((a) => a.ability.name))],
+    }))
+    .sort((a, b) => a.speciesId - b.speciesId || a.id - b.id)
+}
 
 const ALL_POKEMON_QUERY = `{
   pokemon(order_by: { id: asc }) {

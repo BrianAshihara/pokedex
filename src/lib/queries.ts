@@ -58,3 +58,5 @@ export const allAbilitiesQuery = () => queryOptions({ queryKey: ['all-abilities'
 export const abilityPageQuery = (slug: string) => queryOptions({ queryKey: ['ability-page', slug], queryFn: () => api.getAbilityPage(slug) })
 
 export const gameSpeciesQuery = () => queryOptions({ queryKey: ['game-species'], queryFn: api.getGameSpecies })
+
+export const speedRosterQuery = () => queryOptions({ queryKey: ['speed-roster'], queryFn: api.getSpeedRoster })

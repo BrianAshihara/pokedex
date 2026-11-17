@@ -1,8 +1,17 @@
 import { createContext, useContext, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react'
+import type { SpeedField, SpeedSet } from '../lib/speed'
 import { MAX_IV, mapStats, type Nature, type StatValues } from '../lib/stats'
 
 export type CompareMode = 'base' | '50' | '100'
-export type LabTab = 'calc' | 'compare'
+export type LabTab = 'calc' | 'compare' | 'speed'
+export type SpeedFormat = 'singles' | 'doubles'
+
+export interface SpeedLabState {
+  format: SpeedFormat
+  field: SpeedField
+  /** [seu lado, oponente], dois Pokémon cada; no 1 vs 1 vale só o primeiro de cada lado. */
+  sides: [[SpeedSet, SpeedSet], [SpeedSet, SpeedSet]]
+}
 
 export interface LabState {
   tab: LabTab
@@ -16,7 +25,20 @@ export interface LabState {
   compare: [string, string, string]
   /** Último Pokémon recebido via ?p=, para não sobrescrever escolhas feitas depois. */
   linked: string | null
+  speed: SpeedLabState
 }
+
+/** Speed máxima por padrão: é a referência mais usada para comparar. A habilidade é escolhida ao carregar o elenco. */
+export const newSpeedSet = (pokemon: string): SpeedSet => ({
+  pokemon,
+  sp: 32,
+  nature: 'plus',
+  stage: 0,
+  ability: null,
+  abilityActive: false,
+  paralyzed: false,
+  ironBall: false,
+})
 
 const INITIAL_STATE: LabState = {
   tab: 'calc',
@@ -28,6 +50,14 @@ const INITIAL_STATE: LabState = {
   compareMode: 'base',
   compare: ['charizard', 'blastoise', ''],
   linked: null,
+  speed: {
+    format: 'singles',
+    field: { weather: 'none', electricTerrain: false, trickRoom: false, tailwind: [false, false] },
+    sides: [
+      [newSpeedSet('dragapult'), newSpeedSet('incineroar')],
+      [newSpeedSet('garchomp'), newSpeedSet('kingambit')],
+    ],
+  },
 }
 
 const LabStateContext = createContext<[LabState, Dispatch<SetStateAction<LabState>>] | null>(null)
