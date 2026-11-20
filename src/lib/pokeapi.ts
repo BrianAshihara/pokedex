@@ -148,6 +148,17 @@ export async function fetchAllPokemonNames(): Promise<string[]> {
   return (data?.results ?? []).map((p) => p.name).filter(Boolean)
 }
 
+/** Nome → id de todos os Pokémon, na ordem de id (mesma requisição de `fetchAllPokemonNames`). */
+export async function fetchPokemonIndex(): Promise<Map<string, number>> {
+  const data = await getCachedJson<{ results: { name: string; url: string }[] }>(`${BASE_URL}/pokemon?limit=20000`)
+  const index = new Map<string, number>()
+  for (const { name, url } of data?.results ?? []) {
+    const id = Number(/\/(\d+)\/?$/.exec(url ?? '')?.[1])
+    if (name && id) index.set(name, id)
+  }
+  return new Map([...index].sort((a, b) => a[1] - b[1]))
+}
+
 function buildAliasMap(): Promise<Map<string, string>> {
   return cached('alias-map', async () => {
     const aliases = new Map<string, string>()

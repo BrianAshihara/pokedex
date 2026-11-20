@@ -128,6 +128,24 @@ Página separada (`/laboratorio`), acessível pelo menu no topo ou pelo botão "
   <img src="assets/evolucao.png" alt="Cadeia de evolução ramificada do Eevee com todas as oito evoluções e seus métodos" width="90%">
 </p>
 
+### Pokémon GO
+
+Página separada (`/go`), na aba "Pokémon GO" do menu.
+
+- **Destaques**: o próximo Dia Comunitário e o próximo grande evento (GO Tour, GO Fest...) em cards grandes, com a arte do Pokémon, contagem regressiva em dias, horas e minutos e os bônus do evento.
+- **Acontecendo agora**: os eventos valendo no momento, com uma barra de progresso até o fim de cada um.
+- **Próximos eventos**: agenda agrupada por dia ("Hoje", "Amanhã"...), com as duas próximas semanas visíveis e o resto em "Mostrar mais". Filtros por categoria: reides, Batalhas Max, destaques e Liga de Batalha.
+- A temporada e o Passe GO atuais aparecem abaixo do título da página.
+- **Reides de agora**: chefes por nível, com tipos, chance de shiny, PC de captura (normal e com clima favorável) e climas que dão bônus. Um nível com um chefe só, como o lendário da semana, ganha um card largo com a arte oficial. As Reides Sombrosas ficam num bloco separado.
+- **Agora no GO**: na página de cada Pokémon, uma faixa avisa se ele está em reides ou em eventos dos próximos 14 dias.
+- Horários no fuso do aparelho: eventos em horário local (Dia Comunitário às 14h em qualquer lugar) e globais (Liga de Batalha) são tratados de formas diferentes.
+- Em PT, os títulos são traduzidos por modelos fixos (ex.: "Pawniard Community Day" → "Dia Comunitário: Pawniard"). Nomes próprios de eventos sem modelo ficam em inglês. Nada de IA nem serviço pago.
+- Só dados factuais (nomes, datas, PC); nenhuma imagem ou texto do LeekDuck. As imagens são os sprites da PokeAPI.
+
+<p align="center">
+  <img src="assets/go.png" alt="Página Pokémon GO: temporada e Passe GO abaixo do título, destaques do Dia Comunitário do Pawniard com contagem regressiva e bônus e do GO Tour: Alola, e a grade Acontecendo agora com reides e eventos e suas barras de progresso" width="90%">
+</p>
+
 ## Idiomas
 
 A interface está em português (PT-BR) e inglês (EN-US), com um seletor discreto no topo. O idioma inicial segue o do navegador (português abre em PT, qualquer outro em EN), e a escolha fica salva.
@@ -160,10 +178,11 @@ O código é dividido em camadas com responsabilidades separadas:
   - **`game.ts`**: regras do "Quem é esse Pokémon?": conferência do palpite com distância de edição e sorteio sem repetir os recentes.
   - **`share-card.ts`**: desenha a imagem de compartilhamento em canvas, sem biblioteca externa.
   - **`versions.ts`**: jogos em ordem cronológica com o nome de exibição.
+  - **`go/`**: Pokémon GO. Lê e valida o feed do ScrapedDuck (`feed.ts`), converte nomes do GO para os da PokeAPI (`names.ts`, ex.: "Alolan Meowth" → `meowth-alola`), traduz títulos, níveis de reide, climas e bônus por modelos fixos (`translate.ts`), monta a agenda e o índice "Agora no GO" (`schedule.ts`) e formata datas e contagens regressivas (`time.ts`).
   - **`queries.ts`**: definições das consultas do TanStack Query usadas pelas telas.
   - **`format.ts`** e **`types.ts`**: formatação, cores por tipo e a tipagem dos dados da API.
 - **`src/components/`**: componentes visuais (cards, hexágono de atributos, árvore de evolução, tabela de golpes, lista de Pokémon) e controles reutilizáveis (select pesquisável, abas, slider, toggle, filtro de tipos).
-- **`src/pages/`**: uma página por arquivo (Pokémon, golpes, habilidades, itens, laboratório e o minijogo), responsáveis pelo layout e pelo estado de cada tela.
+- **`src/pages/`**: uma página por arquivo (Pokémon, golpes, habilidades, itens, laboratório, minijogo e Pokémon GO), responsáveis pelo layout e pelo estado de cada tela.
 - **`src/state/`**: estado do Laboratório, compartilhado entre as páginas para não se perder ao navegar.
 - **`src/i18n/`**: dicionários da interface (`pt.ts` é a referência, e `en.ts` é tipado a partir dele, então faltar um texto quebra o build) e as traduções das descrições da PokeAPI.
 
@@ -176,6 +195,7 @@ Decisões de desempenho:
 - **Listas leves**: os sprites usam carregamento preguiçoso (só os visíveis são baixados), e a filtragem usa `useDeferredValue` para não travar a digitação.
 - **Requisições em paralelo**: tipos, habilidades, golpes, MTs e sprites da evolução são buscados em paralelo, com limite de 16 requisições simultâneas.
 - **Carregamento independente**: cada seção carrega por conta própria com um esqueleto de carregamento, então a tela aparece antes de todos os dados chegarem.
+- **Pokémon GO sob demanda**: a página `/go` e a faixa "Agora no GO" ficam em pedaços separados do pacote, baixados só quando usados. O feed dos eventos fica em cache por meia hora.
 - **Tratamento de falhas**: erros de rede não são cacheados e resultam em uma mensagem amigável na seção afetada, sem derrubar o restante da página.
 
 ## Executando localmente
@@ -225,7 +245,8 @@ pokedex/
 │   ├── hooks/                 # Hooks reutilizáveis
 │   ├── i18n/                  # Dicionários PT/EN e traduções das descrições
 │   ├── lib/                   # PokeAPI, fórmulas, formatação, tipos e testes
-│   ├── pages/                 # Pokémon, Golpes, Habilidades, Itens, Laboratório e minijogo
+│   │   └── go/                # Feed, nomes, tradução e agenda do Pokémon GO
+│   ├── pages/                 # Pokémon, Golpes, Habilidades, Itens, Laboratório, minijogo e Pokémon GO
 │   ├── state/                 # Estado do Laboratório
 │   ├── styles/
 │   │   └── global.css         # Tema e estilos
@@ -254,4 +275,4 @@ pokedex/
 
 Desenvolvido por **Brian Ashihara**.
 
-Dados fornecidos pela [PokeAPI](https://pokeapi.co/). Os locais dos iniciais, lendários e míticos sem registro na API foram levantados na [Bulbapedia](https://bulbapedia.bulbagarden.net/). Pokémon e seus respectivos nomes são marcas registradas da Nintendo, Game Freak e The Pokémon Company. Este é um projeto de fãs, sem fins comerciais e sem afiliação oficial.
+Dados fornecidos pela [PokeAPI](https://pokeapi.co/). Os eventos e reides do Pokémon GO vêm do [LeekDuck](https://leekduck.com/), pelo feed público do [ScrapedDuck](https://github.com/bigfoott/ScrapedDuck). Os locais dos iniciais, lendários e míticos sem registro na API foram levantados na [Bulbapedia](https://bulbapedia.bulbagarden.net/). Pokémon e seus respectivos nomes são marcas registradas da Nintendo, Game Freak e The Pokémon Company; Pokémon GO é desenvolvido pela Scopely Explore. Este é um projeto de fãs, sem fins comerciais e sem afiliação oficial.

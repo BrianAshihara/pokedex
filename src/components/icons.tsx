@@ -23,6 +23,14 @@ export const FlaskIcon = (props: IconProps) => (
   </Icon>
 )
 
+// Pokémon GO: um marcador de mapa, já que o jogo acontece no mundo real.
+export const PinIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 22s7-6.1 7-12a7 7 0 0 0-14 0c0 5.9 7 12 7 12Z" />
+    <circle cx="12" cy="10" r="2.5" />
+  </Icon>
+)
+
 export const SparkIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" />
@@ -139,5 +147,26 @@ export const GlobeIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="12" cy="12" r="10" />
     <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20" />
+  </Icon>
+)
+
+// Categorias de evento do Pokémon GO (quando o evento não tem um Pokémon para ilustrar).
+export const StarIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" />
+  </Icon>
+)
+
+export const TrophyIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+    <path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
+  </Icon>
+)
+
+export const CalendarIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M3 10h18M8 3v4M16 3v4" />
   </Icon>
 )

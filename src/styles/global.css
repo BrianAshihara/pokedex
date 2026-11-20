@@ -3305,3 +3305,760 @@ th[aria-sort] .ml-sort {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Pokémon GO ---------- */
+
+.go-title-block {
+  min-width: 0;
+}
+.go-season {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.go-season-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+}
+.go-season-kind {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.go-season-until {
+  color: var(--muted);
+}
+
+/* Títulos de seção: maiores e com respiro, no lugar dos rótulos pequenos dos cards. */
+.go-section {
+  margin: 40px 0 0;
+}
+.go-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-bottom: 18px;
+}
+.go-h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.go-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+.go-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--accent, var(--yellow));
+}
+.go-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.25);
+  animation: go-pulse 2s ease-in-out infinite;
+}
+@keyframes go-pulse {
+  50% {
+    box-shadow: 0 0 0 6px rgba(74, 222, 128, 0);
+  }
+}
+
+/* ---------- Destaques ---------- */
+
+.go-heroes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+  gap: 18px;
+  margin-top: 8px;
+}
+.go-hero {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  align-items: center;
+  gap: 12px;
+  min-height: 300px;
+  padding: 28px 28px 26px 32px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background:
+    radial-gradient(circle at calc(100% - 130px) 50%, color-mix(in srgb, var(--accent) 30%, transparent) 0%, transparent 240px),
+    linear-gradient(150deg, color-mix(in srgb, var(--accent) 12%, var(--surface-2)) 0%, var(--surface) 75%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+.go-hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.go-hero-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+.go-hero-when {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+.go-tiles {
+  display: flex;
+  gap: 8px;
+}
+.go-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 64px;
+  padding: 8px 10px 6px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.go-tile-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.go-tile-label {
+  margin-top: 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.go-hero-live {
+  width: min(100%, 320px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.go-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.go-chips li {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+}
+.go-chips li.more {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.go-chips li.more button {
+  height: 100%;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-strong);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.go-chips li.more button:hover {
+  color: var(--text);
+}
+.go-ext {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.go-ext:hover {
+  color: var(--text);
+}
+.go-hero-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 220px;
+}
+.go-hero-art a {
+  display: flex;
+  transition: transform 0.2s;
+}
+.go-hero-art a:hover {
+  transform: scale(1.04);
+}
+.go-hero-art img {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.45));
+  animation: float 4.5s ease-in-out infinite;
+}
+/* Mais de um Pokémon: um em leque atrás do outro (o deslocamento fica no link; a imagem flutua). */
+.go-hero-art[data-count='2'] a,
+.go-hero-art[data-count='3'] a {
+  position: absolute;
+}
+.go-hero-art[data-count='2'] img,
+.go-hero-art[data-count='3'] img {
+  width: 150px;
+  height: 150px;
+}
+.go-hero-art[data-count='2'] a:nth-child(1) {
+  transform: translate(-40px, -20px);
+}
+.go-hero-art[data-count='2'] a:nth-child(2) {
+  transform: translate(40px, 24px);
+}
+.go-hero-art[data-count='3'] a:nth-child(1) {
+  transform: translate(-56px, -36px);
+}
+.go-hero-art[data-count='3'] a:nth-child(2) {
+  transform: translate(56px, -12px);
+}
+.go-hero-art[data-count='3'] a:nth-child(3) {
+  transform: translate(-8px, 40px);
+}
+.go-hero-art a:nth-child(2) img {
+  animation-delay: -1.5s;
+}
+.go-hero-art a:nth-child(3) img {
+  animation-delay: -3s;
+}
+/* Sem Pokémon para mostrar (GO Tour, por exemplo): uma Poké Bola grande girando ao fundo. */
+.go-hero.no-art .go-hero-art svg {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  right: -70px;
+  opacity: 0.1;
+  animation: spin 60s linear infinite;
+}
+
+/* ---------- Cards de evento ---------- */
+
+.go-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+}
+.go-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 16px 40px 16px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 58px 50%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 90px),
+    linear-gradient(180deg, var(--surface-2), var(--surface));
+  transition: border-color 0.15s, transform 0.15s;
+}
+.go-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  transform: translateY(-1px);
+}
+.go-card.canceled {
+  opacity: 0.5;
+}
+.go-card.canceled .go-card-title {
+  text-decoration: line-through;
+}
+.go-canceled {
+  color: var(--red);
+}
+.go-card-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+}
+.go-card-art img {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  flex: none;
+}
+/* Vários Pokémon no mesmo evento: sprites sobrepostos. */
+.go-card-art[data-count='2'] img,
+.go-card-art[data-count='3'] img {
+  position: absolute;
+  width: 72px;
+  height: 72px;
+}
+.go-card-art[data-count='2'] img:nth-child(1) {
+  transform: translate(-14px, -8px);
+}
+.go-card-art[data-count='2'] img:nth-child(2) {
+  transform: translate(14px, 10px);
+}
+.go-card-art[data-count='3'] img:nth-child(1) {
+  transform: translate(-18px, -12px);
+}
+.go-card-art[data-count='3'] img:nth-child(2) {
+  transform: translate(18px, -8px);
+}
+.go-card-art[data-count='3'] img:nth-child(3) {
+  transform: translate(0, 16px);
+}
+.go-card-art.icon {
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+.go-card-art.icon svg {
+  width: 34px;
+  height: 34px;
+}
+.go-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+.go-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+.go-card-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.go-pill {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.go-card-bonus {
+  font-size: 0.85rem;
+  color: var(--yellow);
+}
+.go-ends {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #4ade80;
+}
+.go-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.go-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 60%, transparent), var(--accent));
+}
+.go-card-link {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  color: var(--muted);
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.15s, color 0.15s;
+}
+.go-card:hover .go-card-link,
+.go-card-link:focus-visible {
+  opacity: 1;
+}
+.go-card-link:hover {
+  color: var(--text);
+}
+
+/* ---------- Agenda por dia ---------- */
+
+.go-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.go-day {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.go-day-label {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  line-height: 1.05;
+}
+.go-day-num {
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+.go-day-month,
+.go-day-week {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.go-day-week {
+  margin-bottom: 4px;
+}
+.go-day-week.rel {
+  color: var(--yellow);
+}
+.go-more {
+  display: flex;
+  margin: 22px auto 0;
+}
+
+/* ---------- Reides ---------- */
+
+.go-raid-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.go-raid-block {
+  padding: 6px 24px 24px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+}
+.go-raid-block.shadow {
+  border-color: rgba(168, 85, 247, 0.22);
+  background: linear-gradient(180deg, color-mix(in srgb, #a855f7 8%, var(--surface-2)), var(--surface));
+}
+.go-block-title {
+  margin: 20px 0 0;
+  font-size: 1.15rem;
+  color: #c084fc;
+}
+.go-tier {
+  margin-top: 20px;
+}
+.go-tier-title {
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.go-raids {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+  gap: 12px;
+}
+.go-raid {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px 12px 8px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.025);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+a.go-raid:hover {
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+.go-raid-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 84px;
+}
+.go-raid-art img {
+  width: 96px;
+  height: 96px;
+  flex: none;
+  image-rendering: pixelated;
+}
+.go-raid-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.go-raid-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.go-shiny {
+  margin-left: 6px;
+  color: var(--yellow);
+  font-size: 0.85rem;
+}
+.go-raid-types {
+  display: flex;
+  gap: 4px;
+}
+.go-raid-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 2px 0 0;
+}
+.go-raid-stats dt {
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.go-raid-stats dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.go-weather {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.go-weather span {
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+/* Nível com um chefe só (o lendário da semana): card largo com a arte oficial. */
+.go-raids.single {
+  grid-template-columns: 1fr;
+}
+.go-raid.featured {
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 24px;
+  padding: 18px 28px 18px 18px;
+  background: radial-gradient(circle at 118px 50%, rgba(255, 203, 5, 0.14), transparent 170px), rgba(255, 255, 255, 0.025);
+}
+.go-raid.featured .go-raid-art {
+  height: 180px;
+}
+.go-raid.featured .go-raid-art img {
+  width: 180px;
+  height: 180px;
+  image-rendering: auto;
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.45));
+  animation: float 4.5s ease-in-out infinite;
+}
+.go-raid.featured .go-raid-name {
+  font-size: 1.6rem;
+}
+.go-raid.featured .go-raid-info {
+  gap: 10px;
+}
+.go-raid.featured .go-raid-stats dd {
+  font-size: 1.15rem;
+}
+.go-raid.shadow.featured {
+  background: radial-gradient(circle at 118px 50%, rgba(168, 85, 247, 0.2), transparent 170px), rgba(255, 255, 255, 0.025);
+}
+.go-raid.shadow .go-raid-art img {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+}
+.go-credits {
+  margin: 36px 0 0;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.go-credits a {
+  color: var(--text);
+}
+
+/* Faixa "Agora no GO" na página do Pokémon */
+.go-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  background: rgba(74, 222, 128, 0.06);
+  font-size: 0.9rem;
+}
+.go-now-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #4ade80;
+}
+.go-now ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.go-now li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--muted);
+}
+.go-now li b {
+  color: var(--text);
+  font-weight: 600;
+}
+.go-now li.live {
+  border-color: rgba(74, 222, 128, 0.4);
+}
+.go-now-link {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.go-now-link:hover {
+  color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .go-live-dot,
+  .go-hero-art img,
+  .go-raid.featured .go-raid-art img,
+  .go-hero.no-art .go-hero-art svg {
+    animation: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .go-section {
+    margin-top: 32px;
+  }
+  .go-h2 {
+    font-size: 1.35rem;
+  }
+  .go-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 22px 20px;
+  }
+  .go-hero-art {
+    order: -1;
+    height: 160px;
+  }
+  .go-hero-art img {
+    width: 160px;
+    height: 160px;
+  }
+  .go-hero.no-art .go-hero-art {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    order: 0;
+  }
+  .go-tile {
+    min-width: 58px;
+  }
+  .go-day {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .go-day-label {
+    position: static;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .go-day-num {
+    font-size: 1.3rem;
+  }
+  .go-day-week {
+    margin: 0;
+  }
+  .go-raid-block {
+    padding: 4px 14px 16px;
+  }
+  .go-raid.featured {
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px;
+  }
+  .go-raid.featured .go-raid-art,
+  .go-raid.featured .go-raid-art img {
+    width: 110px;
+    height: 110px;
+  }
+  .go-raid.featured .go-raid-name {
+    font-size: 1.25rem;
+  }
+  .go-now-link {
+    margin-left: 0;
+  }
+}
+
+/* Com seis abas, telas bem estreitas (360px) precisam de menos respiro; abaixo disso, quebra a linha. */
+@media (max-width: 400px) {
+  .topnav {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .topnav a {
+    padding: 7px 5px;
+  }
+}

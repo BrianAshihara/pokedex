@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, useRef, type CSSProperties } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigationType, useSearchParams } from 'react-router'
-import { BagIcon, BookIcon, FlaskIcon, GithubIcon, GlobeIcon, LinkedinIcon, SparkIcon, SwordIcon } from './components/icons'
+import { BagIcon, BookIcon, FlaskIcon, GithubIcon, GlobeIcon, LinkedinIcon, PinIcon, SparkIcon, SwordIcon } from './components/icons'
 import { prefetchContent, useContentPrefetch } from './i18n/content'
 import { useI18n, type Language } from './i18n/I18nProvider'
 import { FROM_ABILITY_LIST, FROM_MOVE_LIST } from './lib/format'
@@ -15,6 +15,9 @@ import { MovesListPage } from './pages/MovesListPage'
 import { WhoIsThatPage } from './pages/WhoIsThatPage'
 import { HomePage, PokemonPage } from './pages/PokedexPage'
 import { LabStateProvider } from './state/LabState'
+
+// Pokémon GO fica num pedaço separado do pacote: só baixa quem abre a aba.
+const GoPage = lazy(() => import('./pages/GoPage').then((m) => ({ default: m.GoPage })))
 
 function TopNav() {
   const { t } = useI18n()
@@ -50,9 +53,14 @@ function TopNav() {
       </NavLink>
       <NavLink to="/laboratorio" className={({ isActive }) => (isActive ? 'active' : undefined)}>
         <FlaskIcon />
-        {/* Com cinco abas, o nome curto é o que cabe no celular. */}
+        {/* Com seis abas, o nome curto é o que cabe no celular. */}
         <span className="nav-full">{t.nav.lab}</span>
         <span className="nav-short">{t.nav.labShort}</span>
+      </NavLink>
+      <NavLink to="/go" className={({ isActive }) => (isActive ? 'active' : undefined)}>
+        <PinIcon />
+        <span className="nav-full">{t.nav.go}</span>
+        <span className="nav-short">{t.nav.goShort}</span>
       </NavLink>
     </nav>
   )
@@ -148,6 +156,7 @@ export function App() {
             <Route path="/item/:slug" element={<ItemPage />} />
             <Route path="/laboratorio" element={<LabPage />} />
             <Route path="/quem-e-esse" element={<WhoIsThatPage />} />
+            <Route path="/go" element={<Suspense fallback={null}><GoPage /></Suspense>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

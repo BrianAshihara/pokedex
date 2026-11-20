@@ -21,6 +21,8 @@ import { baseStats } from '../lib/stats'
 import type { Pokemon, PokemonSprites, Sprites } from '../lib/types'
 
 // Os mapas pesam cerca de 90 KB: só carregam quando a página de um Pokémon abre.
+// Faixa "Agora no GO": as regras do feed do Pokémon GO ficam fora do pacote principal.
+const GoNow = lazy(() => import('../components/GoNow').then((m) => ({ default: m.GoNow })))
 const LocationsPanel = lazy(() => import('../components/LocationsPanel').then((m) => ({ default: m.LocationsPanel })))
 
 export function DexHeader() {
@@ -241,6 +243,10 @@ function PokemonDetails({ pokemon }: { pokemon: Pokemon }) {
       </nav>
 
       {speciesError && apiSlow}
+
+      <Suspense fallback={null}>
+        <GoNow pokemonName={pokemon.name} speciesName={speciesName} />
+      </Suspense>
 
       <div className="dex-grid">
         <div ref={heroRef}>

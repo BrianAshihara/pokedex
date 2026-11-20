@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { fetchGoEvents, fetchGoRaids } from './go/feed'
 import * as api from './pokeapi'
 import type { Learnset, Pokemon, Species } from './types'
 
@@ -60,3 +61,12 @@ export const abilityPageQuery = (slug: string) => queryOptions({ queryKey: ['abi
 export const gameSpeciesQuery = () => queryOptions({ queryKey: ['game-species'], queryFn: api.getGameSpecies })
 
 export const speedRosterQuery = () => queryOptions({ queryKey: ['speed-roster'], queryFn: api.getSpeedRoster })
+
+export const pokemonIndexQuery = () => queryOptions({ queryKey: ['pokemon-index'], queryFn: api.fetchPokemonIndex })
+
+// Pokémon GO: o feed muda algumas vezes por dia; meia hora de cache basta.
+const GO_STALE = 30 * 60 * 1000
+
+export const goEventsQuery = () => queryOptions({ queryKey: ['go-events'], queryFn: fetchGoEvents, staleTime: GO_STALE })
+
+export const goRaidsQuery = () => queryOptions({ queryKey: ['go-raids'], queryFn: fetchGoRaids, staleTime: GO_STALE })
